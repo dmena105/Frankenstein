@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -20,6 +21,7 @@ public class SignUpActivity extends AppCompatActivity {
     private EditText mUsernameText;
     private EditText mPasswordText;
     private Button mSignupButton;
+    private TextView mLogInLink;
     private FirebaseAuth mFirebaseAuth;
     private final Context mContext = this;
 
@@ -68,6 +70,12 @@ public class SignUpActivity extends AppCompatActivity {
                             });
 
                 }
+            }
+        });
+        mLogInLink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(mContext, LogInActivity.class));
             }
         });
     }

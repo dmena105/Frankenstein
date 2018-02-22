@@ -83,5 +83,15 @@
         android:text="Gallery, With A New Concept"
         android:textColor="#fff"/>
 
+    <TextView
+        android:id="@+id/textView_toLogIn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button_signup"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="22dp"
+        android:textColor="#ffffff"
+        android:text="Already a user? Log in here" />
+
 
 </RelativeLayout>
