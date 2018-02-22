@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_startpages"
+    tools:context="com.frankenstein.frankenstein.LogInActivity">
+
+    <ImageView
+        android:id="@+id/imageView_signin_logo"
+        android:layout_width="200dp"
+        android:layout_height="125dp"
+        android:layout_alignLeft="@+id/button_signin"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/button_signin"
+        android:layout_marginTop="60dp"
+        android:contentDescription="@string/logo"
+        app:srcCompat="@drawable/f_logo_1x" />
+
+    <TextView
+        android:id="@+id/textView_appName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView_toSignUp"
+        android:layout_alignStart="@+id/textView_toSignUp"
+        android:layout_below="@+id/imageView_signin_logo"
+        android:layout_marginTop="13dp"
+        android:text="Frankenstein"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="#fff" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/editText_signin_username"
+        android:layout_alignRight="@+id/editText_signin_username"
+        android:layout_below="@+id/textView_appName"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:text="Gallery, With A New Concept"
+        android:textColor="#fff" />
+
+    <EditText
+        android:id="@+id/editText_signin_username"
+        android:layout_width="325dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView4"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="26dp"
+        android:drawableLeft="@drawable/ic_username"
+        android:ems="10"
+        android:hint="Username"
+        android:inputType="textEmailAddress"
+        android:textColorHint="#fff"
+        android:textColor="#fff"/>
+    <requestFocus/>
+
+    <EditText
+        android:id="@+id/editText_signin_password"
+        android:layout_width="325dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editText_signin_username"
+        android:layout_alignStart="@+id/editText_signin_username"
+        android:layout_below="@+id/editText_signin_username"
+        android:drawableLeft="@drawable/ic_password"
+        android:ems="10"
+        android:hint="Password"
+        android:textColorHint="#fff"
+        android:textColor="#fff"
+        android:inputType="textPassword" />
+
+    <Button
+        android:id="@+id/button_signin"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editText_signin_password"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="46dp"
+        android:background="@drawable/startpages_button"
+        android:drawableRight="@drawable/ic_signin"
+        android:text="   Log in"
+        android:textColor="#fff" />
+
+    <TextView
+        android:id="@+id/textView_toSignUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button_signin"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="28dp"
+        android:text="Not yet a user? Sign up here!"
+        android:textColor="#fff"/>
+
+
+
+</RelativeLayout>

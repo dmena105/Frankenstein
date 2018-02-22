@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_startpages"
+    tools:context="com.frankenstein.frankenstein.LogInActivity">
+
+    <ImageView
+        android:id="@+id/imageView_signup_logo"
+        android:layout_width="125dp"
+        android:layout_height="125dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="60dp"
+        android:contentDescription="@string/logo"
+        app:srcCompat="@drawable/f_logo_1x" />
+
+    <TextView
+        android:id="@+id/textView_appName_signup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageView_signup_logo"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"
+        android:text="Welcome To Frankenstein"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="#fff"/>
+
+    <EditText
+        android:id="@+id/editText_signup_username"
+        android:layout_width="325dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="19dp"
+        android:drawableLeft="@drawable/ic_username"
+        android:ems="10"
+        android:hint="Username"
+        android:textColorHint="#fff"
+        android:inputType="textEmailAddress"
+        android:textColor="#fff"/>
+
+    <EditText
+        android:id="@+id/editText_signup_password"
+        android:layout_width="325dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editText_signup_username"
+        android:layout_alignStart="@+id/editText_signup_username"
+        android:layout_below="@+id/editText_signup_username"
+        android:drawableLeft="@drawable/ic_password"
+        android:ems="10"
+        android:hint="Password"
+        android:textColorHint="#fff"
+        android:inputType="textPassword"
+        android:textColor="#fff"/>
+
+    <Button
+        android:id="@+id/button_signup"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editText_signup_password"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/startpages_button"
+        android:drawableRight="@drawable/ic_signin"
+        android:text="   Sign up"
+        android:textColor="#fff" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/textView_appName_signup"
+        android:layout_alignRight="@+id/textView_appName_signup"
+        android:layout_below="@+id/textView_appName_signup"
+        android:layout_marginEnd="23dp"
+        android:layout_marginRight="23dp"
+        android:layout_marginTop="6dp"
+        android:text="Gallery, With A New Concept"
+        android:textColor="#fff"/>
+
+
+</RelativeLayout>
