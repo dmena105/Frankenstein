@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
+        // TODO: Use if statement here to start different fragment at different times
+        // Map Fragment
         com.frankenstein.frankenstein.MapFragment mapFragment = new com.frankenstein.frankenstein.MapFragment();
         getFragmentManager().beginTransaction().replace(R.id.main_frame, mapFragment).commit();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
