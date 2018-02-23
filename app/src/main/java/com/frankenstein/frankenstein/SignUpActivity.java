@@ -53,7 +53,7 @@ public class SignUpActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {  // After a successful signup, direct back to login activity
-                                        Intent intent = new Intent(mContext, LogInActivity.class);
+                                        Intent intent = new Intent(mContext, MainActivity.class);
                                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                         startActivity(intent);
                                         Toast.makeText(mContext, "Success", Toast.LENGTH_SHORT).show();
