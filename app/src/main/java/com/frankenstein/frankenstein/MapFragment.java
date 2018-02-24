@@ -82,21 +82,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mMap = googleMap;
         Log.d("debug", "Map is ready");
         checkPermissions();
-        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        String provider = locationManager.getBestProvider(criteria, true);
-        try {       // Display the last known location using marker
-            Location lastLoc = locationManager.getLastKnownLocation(provider);
-            if (lastLoc != null) {
-                Log.d("debug", "here");
-                LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
-            }
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
     }
 
     // For version above 23, check permission before initializing location services.
@@ -111,6 +96,21 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            Criteria criteria = new Criteria();
+            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+            String provider = locationManager.getBestProvider(criteria, true);
+            try {       // Display the last known location using marker
+                Location lastLoc = locationManager.getLastKnownLocation(provider);
+                if (lastLoc != null) {
+                    Log.d("debug", "here");
+                    LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
+                }
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION))
