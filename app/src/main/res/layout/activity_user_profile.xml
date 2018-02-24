@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <View
+        android:id="@+id/profile_activity_clickListenerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <RelativeLayout
+        android:id="@+id/user_profile_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="com.frankenstein.frankenstein.UserProfileActivity">
+        <LinearLayout
+            android:id="@+id/transitionContainer_logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="5dp">
+
+            <Button
+                android:id="@+id/button_logout"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/logout_button_style"
+                android:text="Log out"
+                android:textColor="#ffffff" />
+            <TextView
+                android:id="@+id/textView_confirm_logout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Click again to confirm"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </RelativeLayout>
+
+</FrameLayout>
