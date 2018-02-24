@@ -11,8 +11,8 @@ public class GalleryEntry {
     private String userEmail;
     private long postTime;
     private float azimuth;
-    private float latitude;
-    private float longitude;
+    private double latitude;
+    private double longitude;
     private String postText;
     private Blob picture;
     private String summary;
@@ -49,7 +49,7 @@ public class GalleryEntry {
         this.azimuth = azimuth;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
@@ -57,7 +57,7 @@ public class GalleryEntry {
         this.latitude = latitude;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
