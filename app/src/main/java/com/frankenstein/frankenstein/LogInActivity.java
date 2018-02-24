@@ -15,6 +15,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class LogInActivity extends AppCompatActivity {
     private EditText mUsernameText;
@@ -22,12 +24,16 @@ public class LogInActivity extends AppCompatActivity {
     private Button mLogInButton;
     private TextView mSignUpLink;
     private FirebaseAuth mFirebaseAuth;
+    private DatabaseReference mDatabase;
     private final Context mContext = this;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
         mFirebaseAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
         mUsernameText = findViewById(R.id.editText_signin_username);
         mPasswordText = findViewById(R.id.editText_signin_password);
         mLogInButton = findViewById(R.id.button_signin);
@@ -35,7 +41,7 @@ public class LogInActivity extends AppCompatActivity {
         mLogInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = mUsernameText.getText().toString().trim();
+                final String email = mUsernameText.getText().toString().trim();
                 String password = mPasswordText.getText().toString().trim();
                 if (email.isEmpty() || password.isEmpty()){
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
