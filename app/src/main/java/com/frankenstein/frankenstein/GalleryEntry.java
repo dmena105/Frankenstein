@@ -14,8 +14,20 @@ public class GalleryEntry {
     private double latitude;
     private double longitude;
     private String postText;
-    private Blob picture;
+    private String picture;
     private String summary;
+
+    public GalleryEntry(){
+        entryId = -1;
+        userEmail = "";
+        postTime = System.currentTimeMillis();
+        azimuth = 0;
+        latitude = 0;
+        longitude = 0;
+        postText = "";
+        picture = "";
+        summary = "";
+    }
 
     public long getEntryId() {
         return entryId;
@@ -53,7 +65,7 @@ public class GalleryEntry {
         return latitude;
     }
 
-    public void setLatitude(float latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
@@ -61,7 +73,7 @@ public class GalleryEntry {
         return longitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 
@@ -73,11 +85,11 @@ public class GalleryEntry {
         this.postText = text;
     }
 
-    public Blob getPicture() {
+    public String getPicture() {
         return picture;
     }
 
-    public void setPicture(Blob picture) {
+    public void setPicture(String picture) {
         this.picture = picture;
     }
 

@@ -1,12 +1,15 @@
 package com.frankenstein.frankenstein;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -17,6 +20,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,20 +35,33 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 
-public class MapFragment extends android.app.Fragment implements OnMapReadyCallback, ServiceConnection {
+import java.sql.Blob;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
+        ServiceConnection {
     private GoogleMap mMap;
     private MapView mMapView;
     private Messenger mapFragmentMessenger;
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
     private Marker mCurrentMarker = null;
+    private ArrayList<Marker> mAllGalleryEntries;
+    private GalleryEntry mCurrentSelection;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         mApplicationContext = (Application)getActivity().getApplicationContext();
+        mAllGalleryEntries = new ArrayList<>();
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -58,7 +75,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             Log.d("debug", "map initialize error");
         }
         mMapView.getMapAsync(this);
-        Log.d("debug", "Getting the map fragment");
         return view;
     }
 
@@ -100,11 +116,89 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (marker != null){
+                    mCurrentSelection = new GalleryEntry();
+                    final long id = (long)marker.getTag();
+                    Log.d("debug", "Clicked on "+ id);
+                    DatabaseReference refUtil = MainActivity.databaseReference
+                            .child("users").child(MainActivity.username).child("items");
+                    refUtil.orderByChild("entryId");
+                    refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChildren()){
+                                for (DataSnapshot dss: dataSnapshot.getChildren()){
+                                    if (dss.child("entryId").getValue(Long.class) == id){
+                                        mCurrentSelection.setEntryId(id);
+                                        mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
+                                        mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
+                                        mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
+                                        //mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {}
+                    });
+                    if (mCurrentSelection != null){
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setMessage(mCurrentSelection.getPostText())
+                                .setTitle(Long.valueOf(mCurrentSelection.getPostTime()).toString())
+                                .setPositiveButton("OK", null);
+                        builder.create().show();
+                    }
+                }
+                return false;
+            }
+        });
         Log.d("debug", "Map is ready");
         checkPermissions();
         Intent trackIntent = new Intent(getActivity(), TrackingService.class);
         mApplicationContext.startService(trackIntent);
         mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
+        Runnable loadFromCloud = new Runnable() {
+            @Override
+            public void run() {
+                DatabaseReference refUtil = MainActivity.databaseReference.child("users")
+                        .child(MainActivity.username).child("items");
+                refUtil.orderByChild("rowId");
+                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.hasChildren()){
+                            for (DataSnapshot dss: dataSnapshot.getChildren()){
+                                long id = dss.child("entryId").getValue(Long.class);
+                                double lat = dss.child("latitude").getValue(Double.class);
+                                double lng = dss.child("longitude").getValue(Double.class);
+                                String imageEncodedString = dss.child("picture").getValue(String.class);
+                                MarkerOptions markerOptions = new MarkerOptions()
+                                        .position(new LatLng(lat, lng))
+                                        .title("This is a marker");
+                                if (imageEncodedString != null) {
+                                    byte[] decodedString = Base64.decode(imageEncodedString, Base64.DEFAULT);
+                                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(decodedByte));
+                                }
+                                else markerOptions.icon(BitmapDescriptorFactory
+                                        .defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                Marker marker = mMap.addMarker(markerOptions);
+                                marker.setTag(id);
+                                mAllGalleryEntries.add(marker);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
+            }
+        };
+        Thread loadGalleryEntryFromCloud = new Thread(loadFromCloud);
+        loadGalleryEntryFromCloud.run();
     }
 
     // For version above 23, check permission before initializing location services.

@@ -3,6 +3,7 @@ package com.frankenstein.frankenstein;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
 
 public class UserProfileActivity extends AppCompatActivity {
     private ViewGroup mTransitionGroup;
@@ -34,7 +36,21 @@ public class UserProfileActivity extends AppCompatActivity {
         mFirebaseAuth = FirebaseAuth.getInstance();
         mCancelLogout = findViewById(R.id.profile_activity_clickListenerView);
         mLogOutButton = findViewById(R.id.button_logout);
-
+        Button button = findViewById(R.id.test_button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatabaseReference refUtil = MainActivity.databaseReference.child("users").child(MainActivity.username).child("items");
+                DatabaseReference ref1 = refUtil.push();
+                ref1.child("entryId").getRef().setValue(1);
+                ref1.child("latitude").getRef().setValue(41.613);
+                ref1.child("longitude").getRef().setValue(250.9705);
+                DatabaseReference ref2 = refUtil.push();
+                ref2.child("entryId").getRef().setValue(2);
+                ref2.child("latitude").getRef().setValue(41.6);
+                ref2.child("longitude").getRef().setValue(250.8);
+            }
+        });
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
