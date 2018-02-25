@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -18,6 +20,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,7 +75,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             Log.d("debug", "map initialize error");
         }
         mMapView.getMapAsync(this);
-        Log.d("debug", "Getting the map fragment");
         return view;
     }
 
@@ -173,12 +175,14 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 long id = dss.child("entryId").getValue(Long.class);
                                 double lat = dss.child("latitude").getValue(Double.class);
                                 double lng = dss.child("longitude").getValue(Double.class);
-                                Blob pic = dss.child("picture").getValue(Blob.class);
-                                Log.d("debug", "initializing marker");
+                                String imageEncodedString = dss.child("picture").getValue(String.class);
                                 MarkerOptions markerOptions = new MarkerOptions()
-                                        .position(new LatLng(lat, lng));
-                                if (pic != null) {
-                                    // TODO: get image
+                                        .position(new LatLng(lat, lng))
+                                        .title("This is a marker");
+                                if (imageEncodedString != null) {
+                                    byte[] decodedString = Base64.decode(imageEncodedString, Base64.DEFAULT);
+                                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(decodedByte));
                                 }
                                 else markerOptions.icon(BitmapDescriptorFactory
                                         .defaultMarker(BitmapDescriptorFactory.HUE_RED));

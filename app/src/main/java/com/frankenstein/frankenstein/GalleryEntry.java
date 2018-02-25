@@ -14,7 +14,7 @@ public class GalleryEntry {
     private double latitude;
     private double longitude;
     private String postText;
-    private Blob picture;
+    private String picture;
     private String summary;
 
     public GalleryEntry(){
@@ -25,7 +25,7 @@ public class GalleryEntry {
         latitude = 0;
         longitude = 0;
         postText = "";
-        picture = null;
+        picture = "";
         summary = "";
     }
 
@@ -85,11 +85,11 @@ public class GalleryEntry {
         this.postText = text;
     }
 
-    public Blob getPicture() {
+    public String getPicture() {
         return picture;
     }
 
-    public void setPicture(Blob picture) {
+    public void setPicture(String picture) {
         this.picture = picture;
     }
 
