@@ -15,7 +15,6 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        //SystemClock.sleep(3000);
         if (mFirebaseUser == null) {
             startLogInActivity();
             finish();

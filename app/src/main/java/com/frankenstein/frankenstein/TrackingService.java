@@ -103,7 +103,7 @@ public class TrackingService extends Service {
                         @Override
                         public void onProviderDisabled(String provider) {}
                     };
-                    mLocationManager.requestLocationUpdates(provider, 0, 0, mLocationListener);
+                    mLocationManager.requestLocationUpdates(provider, 2000, 0, mLocationListener);
                 } catch (SecurityException e){
                     e.printStackTrace();
                 }

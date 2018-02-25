@@ -31,20 +31,31 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 
-public class MapFragment extends android.app.Fragment implements OnMapReadyCallback, ServiceConnection {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
+        ServiceConnection {
     private GoogleMap mMap;
     private MapView mMapView;
     private Messenger mapFragmentMessenger;
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
     private Marker mCurrentMarker = null;
+    private ArrayList<Marker> mAllGalleryEntries;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         mApplicationContext = (Application)getActivity().getApplicationContext();
+        mAllGalleryEntries = new ArrayList<>();
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -100,11 +111,51 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (marker != null){
+                    long id = (long)marker.getTag();
+                    Log.d("debug", "Clicked on "+ id);
+                }
+                return false;
+            }
+        });
         Log.d("debug", "Map is ready");
         checkPermissions();
         Intent trackIntent = new Intent(getActivity(), TrackingService.class);
         mApplicationContext.startService(trackIntent);
         mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
+        Runnable loadFromCloud = new Runnable() {
+            @Override
+            public void run() {
+                DatabaseReference refUtil = MainActivity.databaseReference.child("users")
+                        .child(MainActivity.username).child("items");
+                refUtil.orderByChild("rowId");
+                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.hasChildren()){
+                            for (DataSnapshot dss: dataSnapshot.getChildren()){
+                                long id = dss.child("entryId").getValue(Long.class);
+                                double lat = dss.child("latitude").getValue(Double.class);
+                                double lng = dss.child("longitude").getValue(Double.class);
+                                Log.d("debug", "initializing marker");
+                                Marker marker = mMap.addMarker(new MarkerOptions()
+                                        .position(new LatLng(lat, lng))
+                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                                marker.setTag(id);
+                                mAllGalleryEntries.add(marker);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
+            }
+        };
+        Thread loadGalleryEntryFromCloud = new Thread(loadFromCloud);
+        loadGalleryEntryFromCloud.run();
     }
 
     // For version above 23, check permission before initializing location services.
