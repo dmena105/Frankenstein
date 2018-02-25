@@ -1,6 +1,7 @@
 package com.frankenstein.frankenstein;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
@@ -36,6 +37,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -49,6 +51,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Application mApplicationContext;
     private Marker mCurrentMarker = null;
     private ArrayList<Marker> mAllGalleryEntries;
+    private GalleryEntry mCurrentSelection;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -115,8 +118,38 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             @Override
             public boolean onMarkerClick(Marker marker) {
                 if (marker != null){
-                    long id = (long)marker.getTag();
+                    mCurrentSelection = new GalleryEntry();
+                    final long id = (long)marker.getTag();
                     Log.d("debug", "Clicked on "+ id);
+                    DatabaseReference refUtil = MainActivity.databaseReference
+                            .child("users").child(MainActivity.username).child("items");
+                    refUtil.orderByChild("entryId");
+                    refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChildren()){
+                                for (DataSnapshot dss: dataSnapshot.getChildren()){
+                                    if (dss.child("entryId").getValue(Long.class) == id){
+                                        mCurrentSelection.setEntryId(id);
+                                        mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
+                                        mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
+                                        mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
+                                        //mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {}
+                    });
+                    if (mCurrentSelection != null){
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setMessage(mCurrentSelection.getPostText())
+                                .setTitle(Long.valueOf(mCurrentSelection.getPostTime()).toString())
+                                .setPositiveButton("OK", null);
+                        builder.create().show();
+                    }
                 }
                 return false;
             }
@@ -140,10 +173,16 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 long id = dss.child("entryId").getValue(Long.class);
                                 double lat = dss.child("latitude").getValue(Double.class);
                                 double lng = dss.child("longitude").getValue(Double.class);
+                                Blob pic = dss.child("picture").getValue(Blob.class);
                                 Log.d("debug", "initializing marker");
-                                Marker marker = mMap.addMarker(new MarkerOptions()
-                                        .position(new LatLng(lat, lng))
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                                MarkerOptions markerOptions = new MarkerOptions()
+                                        .position(new LatLng(lat, lng));
+                                if (pic != null) {
+                                    // TODO: get image
+                                }
+                                else markerOptions.icon(BitmapDescriptorFactory
+                                        .defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                Marker marker = mMap.addMarker(markerOptions);
                                 marker.setTag(id);
                                 mAllGalleryEntries.add(marker);
                             }
