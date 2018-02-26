@@ -3,6 +3,7 @@ package com.frankenstein.frankenstein;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,9 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -21,10 +25,15 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -59,13 +68,13 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
         mApplicationContext = (Application)getActivity().getApplicationContext();
         mAllGalleryEntries = new ArrayList<>();
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume();
@@ -116,10 +125,21 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+       /* mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                return null;
+            }
+        });*/
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                if (marker != null){
+                if (marker != null && !marker.equals(mCurrentMarker)){
                     mCurrentSelection = new GalleryEntry();
                     final long id = (long)marker.getTag();
                     Log.d("debug", "Clicked on "+ id);
@@ -136,7 +156,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                         mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
                                         mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
                                         mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
-                                        //mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                                        mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
                                     }
                                 }
                             }
@@ -146,11 +166,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                         public void onCancelled(DatabaseError databaseError) {}
                     });
                     if (mCurrentSelection != null){
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                        builder.setMessage(mCurrentSelection.getPostText())
-                                .setTitle(Long.valueOf(mCurrentSelection.getPostTime()).toString())
-                                .setPositiveButton("OK", null);
-                        builder.create().show();
+                        Dialog dialog = new Dialog(getActivity());
+                        dialog.setContentView(R.layout.post_snapshot_popup_window);
+                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                        dialog.show();
                     }
                 }
                 return false;
