@@ -45,10 +45,12 @@ public class UserProfileActivity extends AppCompatActivity {
                 ref1.child("entryId").getRef().setValue(1);
                 ref1.child("latitude").getRef().setValue(41.613);
                 ref1.child("longitude").getRef().setValue(250.9705);
+                ref1.child("postTime").getRef().setValue(System.currentTimeMillis());
                 DatabaseReference ref2 = refUtil.push();
                 ref2.child("entryId").getRef().setValue(2);
                 ref2.child("latitude").getRef().setValue(41.6);
                 ref2.child("longitude").getRef().setValue(250.8);
+                ref2.child("postTime").getRef().setValue(System.currentTimeMillis());
             }
         });
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
