@@ -24,7 +24,6 @@ public class LogInActivity extends AppCompatActivity {
     private Button mLogInButton;
     private TextView mSignUpLink;
     private FirebaseAuth mFirebaseAuth;
-    private DatabaseReference mDatabase;
     private final Context mContext = this;
 
     @Override
@@ -32,8 +31,6 @@ public class LogInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
         mFirebaseAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-
         mUsernameText = findViewById(R.id.editText_signin_username);
         mPasswordText = findViewById(R.id.editText_signin_password);
         mLogInButton = findViewById(R.id.button_signin);

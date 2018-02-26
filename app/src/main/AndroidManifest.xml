@@ -52,7 +52,11 @@
         <service
             android:name=".TrackingService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <activity android:name=".GalleryTimeline"
+            android:label="Gallery Timeline">
+        </activity>
     </application>
 
 </manifest>
