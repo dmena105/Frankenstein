@@ -2,6 +2,7 @@ package com.frankenstein.frankenstein;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -15,14 +16,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.MapFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import org.w3c.dom.Text;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -31,6 +38,8 @@ public class MainActivity extends AppCompatActivity
     private FirebaseUser mFirebaseUser;
     public static String username;
     public static DatabaseReference databaseReference;
+    private String nickname;
+    private String profileUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +48,36 @@ public class MainActivity extends AppCompatActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
+        Log.d("debug", "username: " + username);
+        int mode = getIntent().getIntExtra("mode", 1);
+        if (mode == 0){
+            nickname = getIntent().getStringExtra("nickname");
+            profileUri = getIntent().getStringExtra("profile");
+            if (nickname != null) databaseReference.child("users").child(username)
+                    .child("profile").child("username").getRef().setValue(nickname);
+            if (profileUri != null) databaseReference.child("users").child(username)
+                    .child("profile").child("profilePicture").getRef().setValue(profileUri);
+        }
+        else {
+            DatabaseReference refUtil = databaseReference.child("users").child(username).child("profile");
+            refUtil.orderByChild("username");
+            refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.hasChildren()){
+                        for (DataSnapshot dss: dataSnapshot.getChildren()){
+                            nickname = dss.child("username").getValue(String.class);
+                            profileUri = dss.child("profilePicture").getValue(String.class);
+                            Log.d("debug", "profile URi: " + profileUri);
+                            Log.d("debug", "nickname" + nickname);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            });
+        }
         // TODO: Use if statement here to start different fragment at different times
         // Map Fragment
         com.frankenstein.frankenstein.MapFragment mapFragment = new com.frankenstein.frankenstein.MapFragment();
@@ -64,6 +103,12 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         View v = navigationView.getHeaderView(0);
+        if (nickname != null)
+            ((TextView)v.findViewById(R.id.textView_mainDrawer_nickname)).setText(nickname);
+        if (profileUri != null)
+            ((ImageView)v.findViewById(R.id.imageView_mainDrawer)).setImageURI(Uri.parse(profileUri));
+        else ((ImageView)v.findViewById(R.id.imageView_mainDrawer))
+                .setImageResource(R.drawable.ic_signup_image_placeholder);
         TextView navViewEmail = v.findViewById(R.id.emailTextView);
         navViewEmail.setText(mFirebaseUser.getEmail());
     }

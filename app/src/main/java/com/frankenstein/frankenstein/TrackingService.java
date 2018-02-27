@@ -104,7 +104,7 @@ public class TrackingService extends Service {
                         public void onProviderDisabled(String provider) {}
                     };
                     mLocationManager.requestLocationUpdates(provider, 2000, 0, mLocationListener);
-                } catch (SecurityException e){
+                } catch (SecurityException e) {
                     e.printStackTrace();
                 }
             }
