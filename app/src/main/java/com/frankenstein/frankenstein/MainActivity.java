@@ -2,8 +2,10 @@ package com.frankenstein.frankenstein;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -18,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.MapFragment;
@@ -111,6 +114,14 @@ public class MainActivity extends AppCompatActivity
                 .setImageResource(R.drawable.ic_signup_image_placeholder);
         TextView navViewEmail = v.findViewById(R.id.emailTextView);
         navViewEmail.setText(mFirebaseUser.getEmail());
+
+        v.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), UserProfileActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -141,7 +152,6 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_personal_profile){
             startActivity(new Intent(this, UserProfileActivity.class));
         } else if (id == R.id.nav_setting){
-
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
