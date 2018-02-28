@@ -8,63 +8,52 @@
     android:background="@drawable/gradient_startpages"
     tools:context="com.frankenstein.frankenstein.LogInActivity">
 
-    <ImageView
-        android:id="@+id/imageView_signup_logo"
-        android:layout_width="125dp"
-        android:layout_height="125dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="60dp"
-        android:contentDescription="@string/logo"
-        app:srcCompat="@drawable/f_logo_1x" />
-
     <TextView
         android:id="@+id/textView_appName_signup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/imageView_signup_logo"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="41dp"
         android:text="Welcome To Frankenstein"
+        android:textColor="#fff"
         android:textSize="30sp"
-        android:textStyle="bold"
-        android:textColor="#fff"/>
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/editText_signup_username"
         android:layout_width="325dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView3"
+        android:layout_below="@+id/imageButton_profilePicture"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="19dp"
+        android:layout_marginTop="26dp"
         android:drawableLeft="@drawable/ic_username"
         android:ems="10"
-        android:hint="Email"
-        android:textColorHint="#fff"
+        android:hint="Email Address"
         android:inputType="textEmailAddress"
-        android:textColor="#fff"/>
+        android:textColor="#fff"
+        android:textColorHint="#fff" />
 
     <EditText
         android:id="@+id/editText_signup_password"
         android:layout_width="325dp"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/editText_signup_username"
         android:layout_alignStart="@+id/editText_signup_username"
         android:layout_below="@+id/editText_signup_username"
         android:drawableLeft="@drawable/ic_password"
         android:ems="10"
         android:hint="Password"
-        android:textColorHint="#fff"
         android:inputType="textPassword"
-        android:textColor="#fff"/>
+        android:textColor="#fff"
+        android:textColorHint="#fff" />
 
     <Button
         android:id="@+id/button_signup"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/editText_signup_password"
+        android:layout_below="@+id/editText_signup_nickName"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="28dp"
         android:background="@drawable/startpages_button"
         android:drawableRight="@drawable/ic_signin"
         android:text="   Sign up"
@@ -92,6 +81,28 @@
         android:layout_marginTop="22dp"
         android:textColor="#ffffff"
         android:text="Already a user? Log in here" />
+
+    <EditText
+        android:id="@+id/editText_signup_nickName"
+        android:layout_width="325dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editText_signup_password"
+        android:layout_centerHorizontal="true"
+        android:drawableLeft="@drawable/ic_nickname"
+        android:ems="10"
+        android:hint="Nickname"
+        android:inputType="textPersonName"
+        android:textColorHint="#ffffff" />
+
+    <ImageButton
+        android:id="@+id/imageButton_profilePicture"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27dp"
+        android:background="@drawable/signup_picture_style"
+        app:srcCompat="@drawable/ic_signup_image_placeholder" />
 
 
 </RelativeLayout>
