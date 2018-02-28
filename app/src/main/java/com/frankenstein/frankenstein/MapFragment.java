@@ -40,6 +40,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -79,6 +80,12 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private TextView mTextViewTime;
     private TextView mTextViewSummary;
 
+    /*private long savedMarkerId;
+    private boolean savedMarkerIsSelected;
+    private boolean savedPreviousLocationExists;
+    private CameraUpdate savedCameraPosition;
+    private double currLat;*/
+
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -100,6 +107,49 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mMapView.getMapAsync(this);
         return view;
     }
+
+    /*@Override
+    public void onSaveInstanceState(Bundle outState){
+        super.onSaveInstanceState(outState);
+        if (mPreviousLocation != null){
+            outState.putBoolean("mPreviousLocationIsNull", false);
+            outState.putDouble("prevLat", mPreviousLocation.latitude);
+            outState.putDouble("prevLng", mPreviousLocation.longitude);
+            outState.putFloat("prevZoom", mZoomLevel);
+        }
+        else outState.putBoolean("mPreviousLocationIsNull", true);
+        outState.putDouble("currLat", mMap.getCameraPosition().target.latitude);
+        outState.putDouble("currLng", mMap.getCameraPosition().target.longitude);
+        outState.putFloat("currZoom", mMap.getCameraPosition().zoom);
+        Log.d("debug", "currLat saved: " + mMap.getCameraPosition().target.latitude);
+        if (mCurrentSelection != null){
+            outState.putLong("currMarkerId", mCurrentSelection.getEntryId());
+            outState.putBoolean("markerIsSelected", true);
+        }
+        else outState.putBoolean("markerIsSelected", false);
+
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+        super.onActivityCreated(savedInstanceState);
+        try {
+            savedCameraPosition = CameraUpdateFactory.newLatLngZoom
+                                    (new LatLng(savedInstanceState.getDouble("currLat")
+                                    , savedInstanceState.getDouble("currLng"))
+                            , savedInstanceState.getFloat("currZoom"));
+            Log.d("debug", "currLat retrieved: " + savedInstanceState.getDouble("currLat"));
+            if (!savedInstanceState.getBoolean("mPreviousLocationIsNull")) {
+                mPreviousLocation = new LatLng(savedInstanceState.getDouble("prevLat")
+                        , savedInstanceState.getDouble("prevLng"));
+            }
+            if (savedInstanceState.getBoolean("markerIsSelected")) {
+                savedMarkerIsSelected = true;
+                savedMarkerId = savedInstanceState.getLong("currMarkerId");
+            }
+            else savedMarkerIsSelected = false;
+        } catch (NullPointerException e){}
+    }*/
 
     @Override
     public void onResume() {
@@ -139,6 +189,19 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        /*if (savedMarkerIsSelected) {
+            for (Marker marker : mAllGalleryEntries) {
+                if (((GalleryEntry) marker.getTag()).getEntryId() == savedMarkerId) {
+                    marker.showInfoWindow();
+                    break;
+                }
+            }
+        }
+        Log.d("debug", "currLat used: " + currLat);
+        if (savedCameraPosition != null) {
+            mMap.animateCamera(savedCameraPosition);
+            Log.d("debug", "currLat used: " + savedCameraPosition.toString());
+        }*/
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             public View getInfoWindow(Marker marker) {
@@ -177,6 +240,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 if (marker != null && !marker.equals(mCurrentMarker)){
                     mCurrentSelection = new GalleryEntry();
                     final long id = ((GalleryEntry)marker.getTag()).getEntryId();
+                    mCurrentSelection.setEntryId(id);
                     Log.d("debug", "Clicked on "+ id);
                     DatabaseReference refUtil = MainActivity.databaseReference
                             .child("users").child(MainActivity.username).child("items");
@@ -187,7 +251,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                             if (dataSnapshot.hasChildren()){
                                 for (DataSnapshot dss: dataSnapshot.getChildren()){
                                     if (dss.child("entryId").getValue(Long.class) == id){
-                                        mCurrentSelection.setEntryId(id);
                                         mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
                                         mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
                                         mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
@@ -227,6 +290,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             @Override
             public void onInfoWindowClose(Marker marker) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mPreviousLocation, mZoomLevel));
+                mCurrentSelection = null;
             }
         });
         Log.d("debug", "Map is ready");
@@ -236,7 +300,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             public void run() {
                 DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                         .child(MainActivity.username).child("items");
-                refUtil.orderByChild("rowId");
+                refUtil.orderByChild("entryId");
                 refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -316,8 +380,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 if (lastLoc != null) {
                     Log.d("debug", "here");
                     LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
+                    //mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
+                    //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
                 }
                 Intent trackIntent = new Intent(getActivity(), TrackingService.class);
                 mApplicationContext.startService(trackIntent);
@@ -364,7 +428,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     if (mCurrentMarker != null) {
                         mCurrentMarker.remove();
                     }
-                    else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
+                    // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
                     mCurrentMarker = mMap.addMarker(new MarkerOptions()
                                         .position(currLoc)
                                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
