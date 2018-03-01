@@ -145,6 +145,33 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+//    public static void updateNavView(){
+//        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+//        navigationView.setNavigationItemSelectedListener(this);
+//        View v = navigationView.getHeaderView(0);
+//        ImageView mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
+//        TextView mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
+//
+//        DatabaseReference refUtil = databaseReference.child("users").child(username).child("profile");
+//        refUtil.orderByChild("profilePicture");
+//        refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                if (dataSnapshot.hasChildren()){
+//                    for (DataSnapshot dss: dataSnapshot.getChildren()){
+//                        String nickname = dss.child("username").getValue(String.class);
+//                        String profileUri = dss.child("profilePicture").getValue(String.class);
+//                        if (profileUri != null) mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
+//                        else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+//                        if (nickname != null) mTextViewNickname.setText(nickname);
+//                    }
+//                }
+//            }
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {}
+//        });
+//    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

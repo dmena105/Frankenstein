@@ -1,45 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <!--TODO: Fix the VIEW location for removing the LOGOUT Confirmation-->
+
     <View
         android:id="@+id/profile_activity_clickListenerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
-    <RelativeLayout
-        android:id="@+id/user_profile_layout"
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="com.frankenstein.frankenstein.UserProfileActivity">
-        <LinearLayout
-            android:id="@+id/transitionContainer_logout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="5dp">
+        android:orientation="vertical">
 
-            <Button
-                android:id="@+id/button_logout"
-                android:layout_width="200dp"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_centerVertical="true">
+
+            <android.support.v7.widget.Toolbar
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/logout_button_style"
-                android:text="Log out"
-                android:textColor="#ffffff" />
+                android:minHeight="?attr/actionBarSize"
+                android:background="@color/colorPrimary"
+                android:id="@+id/toolbarForUserProfile"/>
+
             <TextView
-                android:id="@+id/textView_confirm_logout"
-                android:layout_width="wrap_content"
+                android:id="@+id/textView"
+                android:paddingHorizontal="10pt"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Click again to confirm"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:text="Profile Photo:" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10pt"
+                android:baselineAligned="false">
+
+                <ImageView
+                    android:id="@+id/profileImage"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:contentDescription="Profile Photo"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true">
+
+                    <requestFocus />
+                </ImageView>
+
+                <Button
+                    android:id="@+id/btnChangePhoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="5dp"
+                    android:text="CHANGE">
+                    <!--android:onClick="onChangePhotoClicked"-->
+                </Button>
+            </LinearLayout>
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10pt"
+                android:text="Nick Name" />
+
+            <EditText
+                android:id="@+id/editNickName"
+                android:paddingHorizontal="10pt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="nickname"
+                android:inputType="textCapWords" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:paddingHorizontal="10pt"
+                android:layout_height="wrap_content"
+                android:text="Email" />
+
+            <EditText
+                android:id="@+id/editEmail"
+                android:paddingHorizontal="10pt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="user email"
+                android:inputType="textEmailAddress" />
+
         </LinearLayout>
 
-    </RelativeLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/transitionContainer_logout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="5dp">
+
+        <Button
+            android:id="@+id/button_logout"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/logout_button_style"
+            android:text="Log out"
+            android:textColor="#ffffff" />
+        <TextView
+            android:id="@+id/textView_confirm_logout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Click again to confirm"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </FrameLayout>
