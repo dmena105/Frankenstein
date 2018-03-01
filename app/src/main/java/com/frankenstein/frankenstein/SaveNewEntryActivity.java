@@ -3,7 +3,6 @@ package com.frankenstein.frankenstein;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
@@ -17,9 +16,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
+import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.HamButton;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.ButtonEnum;
+import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 
 import java.io.ByteArrayOutputStream;
 
@@ -89,17 +92,24 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                 startActivity(new Intent(mContext, MainActivity.class));
             }
         });
+        mBoomMenu.setButtonPlaceEnum(ButtonPlaceEnum.HAM_3);
+        mBoomMenu.setPiecePlaceEnum(PiecePlaceEnum.HAM_3);
+        mBoomMenu.setBoomEnum(BoomEnum.RANDOM);
+        mBoomMenu.setButtonEnum(ButtonEnum.Ham);
         for (int i=0; i<mBoomMenu.getPiecePlaceEnum().pieceNumber(); i++){
             switch(i){
                 case 0:
                     HamButton.Builder builder0 = new HamButton.Builder()
                             .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_map)
-                            .normalText("Option 1")
+                            .normalImageRes(R.drawable.ic_menu_camera)
+                            .normalText("Retake a photo")
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Log.d("debug", "Option 1");
+                                    Intent retake = new Intent(mContext, EditNewEntryActivity.class);
+                                    retake.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    retake.putExtra("location", mLocation);
+                                    startActivity(retake);
                                 }
                             });
                     mBoomMenu.addBuilder(builder0);
@@ -107,12 +117,14 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                 case 1:
                     HamButton.Builder builder1 = new HamButton.Builder()
                             .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_current_location)
-                            .normalText("Option 2")
+                            .normalImageRes(R.drawable.ic_boom_button_map)
+                            .normalText("Back to Map")
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Log.d("debug", "Option 2");
+                                    Intent backToMap = new Intent(mContext, MainActivity.class);
+                                    backToMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(backToMap);
                                 }
                             });
                     mBoomMenu.addBuilder(builder1);

@@ -36,25 +36,6 @@ public class UserProfileActivity extends AppCompatActivity {
         mFirebaseAuth = FirebaseAuth.getInstance();
         mCancelLogout = findViewById(R.id.profile_activity_clickListenerView);
         mLogOutButton = findViewById(R.id.button_logout);
-        Button button = findViewById(R.id.test_button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DatabaseReference refUtil = MainActivity.databaseReference.child("users").child(MainActivity.username).child("items");
-                DatabaseReference ref1 = refUtil.push();
-                ref1.child("entryId").getRef().setValue(1);
-                ref1.child("latitude").getRef().setValue(41.613);
-                ref1.child("longitude").getRef().setValue(250.9705);
-                ref1.child("postTime").getRef().setValue(System.currentTimeMillis());
-                ref1.child("summary").getRef().setValue("This is a summary111");
-                DatabaseReference ref2 = refUtil.push();
-                ref2.child("entryId").getRef().setValue(2);
-                ref2.child("latitude").getRef().setValue(41.6);
-                ref2.child("longitude").getRef().setValue(250.8);
-                ref2.child("postTime").getRef().setValue(System.currentTimeMillis());
-                ref2.child("summary").getRef().setValue("This is a summary222");
-            }
-        });
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

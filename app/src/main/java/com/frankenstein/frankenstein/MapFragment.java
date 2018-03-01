@@ -72,6 +72,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private TextView mTextViewTime;
     private TextView mTextViewSummary;
     private BoomMenuButton mBoomButton;
+    private Marker mCurrentMarkerSelected;
     /*private long savedMarkerId;
     private boolean savedMarkerIsSelected;
     private boolean savedPreviousLocationExists;
@@ -243,10 +244,12 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                             if (dataSnapshot.hasChildren()){
                                 for (DataSnapshot dss: dataSnapshot.getChildren()){
                                     if (dss.child("entryId").getValue(Long.class) == id){
-                                        mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
-                                        mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
-                                        mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
-                                        mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                                        try {
+                                            mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
+                                            mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
+                                            mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
+                                            mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                                        } catch (NullPointerException e){}
                                     }
                                 }
                             }
@@ -264,6 +267,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                             LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
                             marker.showInfoWindow();
+                            mCurrentMarkerSelected = marker;
                         }
 
                     }
@@ -283,6 +287,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             public void onInfoWindowClose(Marker marker) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mPreviousLocation, mZoomLevel));
                 mCurrentSelection = null;
+                mCurrentMarkerSelected = null;
             }
         });
         Log.d("debug", "Map is ready");
@@ -378,13 +383,16 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 @Override
                                 public void onBoomButtonClick(int index) {
                                     if (mAllGalleryEntries != null){
+                                        if (mCurrentMarkerSelected != null){
+                                            mCurrentMarkerSelected.hideInfoWindow();
+                                        }
                                         int markerIndex = (int)(Math.random() * (mAllGalleryEntries.size()));
                                         Marker marker = mAllGalleryEntries.get(markerIndex);
                                         LatLng mLoc = marker.getPosition();
                                         double lat = mLoc.latitude + 0.0065;
                                         LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
-                                        // TODO: Info Window is Not Shown
+                                        // TODO: Info Window Does Not Shown Every Time
                                         marker.showInfoWindow();
                                         Log.d("debug", ""+marker.isInfoWindowShown());
                                     }
