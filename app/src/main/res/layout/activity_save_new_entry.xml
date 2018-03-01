@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.frankenstein.frankenstein.SaveNewEntryActivity"
+    android:background="@drawable/gradient_startpages">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/imageView_newEntry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            app:srcCompat="@drawable/ic_menu_camera" />
+
+        <EditText
+            android:id="@+id/EditText_summary_newEntry"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView_newEntry"
+            android:layout_centerHorizontal="true"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            android:hint="Summary                      (Max 50 Characters)"
+            android:textAlignment="center"
+            android:textColor="#ffffff"
+            android:textColorHint="#ffffff" />
+
+        <EditText
+            android:id="@+id/editText_text_newEntry"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/EditText_summary_newEntry"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="11dp"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            android:hint="Body Text"
+            android:textAlignment="center"
+            android:textColor="#ffffff"
+            android:textColorHint="#ffffff" />
+
+        <Button
+            android:id="@+id/button_save_newEntry"
+            android:layout_width="125dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/editText_text_newEntry"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/startpages_button"
+            android:text="Save"
+            android:textColor="#ffffff" />
+
+        <com.nightonke.boommenu.BoomMenuButton
+            android:id="@+id/boombutton_saveNewEntry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true">
+
+        </com.nightonke.boommenu.BoomMenuButton>
+    </RelativeLayout>
+
+
+</ScrollView>

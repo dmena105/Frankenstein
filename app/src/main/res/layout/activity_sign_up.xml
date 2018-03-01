@@ -92,7 +92,8 @@
         android:ems="10"
         android:hint="Nickname"
         android:inputType="textPersonName"
-        android:textColorHint="#ffffff" />
+        android:textColorHint="#ffffff"
+        android:textColor="#ffffff"/>
 
     <ImageButton
         android:id="@+id/imageButton_profilePicture"

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_startpages"
+    android:visibility="visible"
+    tools:context="com.frankenstein.frankenstein.EditNewEntryActivity">
+
+    <FrameLayout
+        android:id="@+id/container_newEntry"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true">
+
+        <com.otaliastudios.cameraview.CameraView
+            android:id="@+id/CameraView_newEntry"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:keepScreenOn="true">
+        </com.otaliastudios.cameraview.CameraView>
+        <Button
+            android:id="@+id/Button_takePic"
+            android:layout_width="77dp"
+            android:layout_height="77dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/button_takepic_style"
+            android:backgroundTint="#C0C0C0" />
+
+        <com.nightonke.boommenu.BoomMenuButton
+            android:id="@+id/boombutton_newEntry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/fab_margin">
+
+        </com.nightonke.boommenu.BoomMenuButton>
+    </FrameLayout>
+
+</RelativeLayout>
