@@ -70,6 +70,7 @@ public class SignUpActivity extends AppCompatActivity {
         mLogInLink = findViewById(R.id.textView_toLogIn);
         mProfilePicture = findViewById(R.id.imageButton_profilePicture);
         mNicknameText = findViewById(R.id.editText_signup_nickName);
+
         mProfilePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
