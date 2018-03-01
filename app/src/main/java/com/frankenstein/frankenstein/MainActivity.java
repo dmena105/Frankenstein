@@ -2,6 +2,7 @@ package com.frankenstein.frankenstein;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,6 +32,14 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButton;
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
+import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
+import com.nightonke.boommenu.BoomButtons.TextInsideCircleButton;
+import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.ButtonEnum;
+import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 
 import org.w3c.dom.Text;
 
@@ -41,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private FirebaseUser mFirebaseUser;
     public static String username;
     public static DatabaseReference databaseReference;
+    public static long itemcount;
     private String nickname;
     private String profileUri;
     private ImageView mImageViewProfilePic;
@@ -112,13 +122,15 @@ public class MainActivity extends AppCompatActivity
                     .setImageResource(R.drawable.ic_signup_image_placeholder);
         }
         else {
-            DatabaseReference refUtil = databaseReference.child("users").child(username).child("profile");
-            refUtil.orderByChild("profilePicture");
+            DatabaseReference refUtil = databaseReference.child("users").child(username);
             refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.hasChildren()){
-                        for (DataSnapshot dss: dataSnapshot.getChildren()){
+                    if (dataSnapshot.child("items").hasChildren())
+                            itemcount = dataSnapshot.child("items").getChildrenCount();
+
+                    if (dataSnapshot.child("profile").hasChildren()){
+                        for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
                             nickname = dss.child("username").getValue(String.class);
                             profileUri = dss.child("profilePicture").getValue(String.class);
                             if (profileUri != null) mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
@@ -195,5 +207,15 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState){
+        super.onSaveInstanceState(outState);
+        outState.putLong("itemcount", itemcount);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState){
+        itemcount = savedInstanceState.getLong("itemcount");
+    }
 
 }
