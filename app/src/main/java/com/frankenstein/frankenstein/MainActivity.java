@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.internal.NavigationMenuPresenter;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -43,10 +44,12 @@ import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 
 import org.w3c.dom.Text;
 
+import java.lang.reflect.Field;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private String TAG = "TESTING123";
+    private String TAG = "MAINACT";
     private FirebaseUser mFirebaseUser;
     public static String username;
     public static DatabaseReference databaseReference;
@@ -114,28 +117,40 @@ public class MainActivity extends AppCompatActivity
                     .setImageResource(R.drawable.ic_signup_image_placeholder);
         }
         else {
-            DatabaseReference refUtil = databaseReference.child("users").child(username);
-            refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.child("items").hasChildren())
-                            itemcount = dataSnapshot.child("items").getChildrenCount();
-
-                    if (dataSnapshot.child("profile").hasChildren()){
-                        for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
-                            nickname = dss.child("username").getValue(String.class);
-                            profileUri = dss.child("profilePicture").getValue(String.class);
-                            if (profileUri != null) mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
-                            else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
-                            if (nickname != null) mTextViewNickname.setText(nickname);
-                        }
-                    }
-                }
-                @Override
-                public void onCancelled(DatabaseError databaseError) {}
-            });
+            updateNavigationView();
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //This is for when the user returns from making changes from user profiles
+        updateNavigationView();
+    }
+
+    private void updateNavigationView(){
+        DatabaseReference refUtil = databaseReference.child("users").child(username);
+        refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.child("items").hasChildren())
+                    itemcount = dataSnapshot.child("items").getChildrenCount();
+
+                if (dataSnapshot.child("profile").hasChildren()){
+                    for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
+                        nickname = dss.child("username").getValue(String.class);
+                        profileUri = dss.child("profilePicture").getValue(String.class);
+                        if (profileUri != null) mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
+                        else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                        mTextViewNickname.setText(nickname);
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+    }
+
 
     @Override
     public void onBackPressed() {

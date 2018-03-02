@@ -275,8 +275,7 @@ public class UserProfileActivity extends AppCompatActivity {
             });
 
             Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, MainActivity.class));
-            //finish();
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
