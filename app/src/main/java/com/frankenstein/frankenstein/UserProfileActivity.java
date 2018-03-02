@@ -4,12 +4,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,7 +33,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.soundcloud.android.crop.Crop;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
@@ -247,8 +253,20 @@ public class UserProfileActivity extends AppCompatActivity {
                             String key = (String) dss.getKey();
                             if (nickName != null)
                                 profile.child(key).child("username").setValue(nickName.getText().toString().trim());
-                            if (mImageSource != null)
-                                profile.child(key).child("profilePicture").setValue(mImageSource.toString());
+                            if (mImageSource != null) {
+                                // Turning Uri into Bitmap
+                                try {
+                                    InputStream image_stream = getContentResolver().openInputStream(mImageSource);
+                                    Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
+                                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 50, byteArrayOutputStream);
+                                    byte[] byteArray = byteArrayOutputStream .toByteArray();
+                                    String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                                    profile.child(key).child("profilePicture").getRef().setValue(encodedImage);
+                                } catch (FileNotFoundException e){
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                     }
                 }
@@ -258,9 +276,10 @@ public class UserProfileActivity extends AppCompatActivity {
 
                 }
             });
-
             Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
-            finish();
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }

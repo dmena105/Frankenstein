@@ -2,12 +2,15 @@ package com.frankenstein.frankenstein;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -42,6 +45,9 @@ import com.nightonke.boommenu.ButtonEnum;
 import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 
 import org.w3c.dom.Text;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -108,40 +114,71 @@ public class MainActivity extends AppCompatActivity
         if (mode == 0){
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
-            DatabaseReference refUtil = databaseReference.child("users")
+            final DatabaseReference refUtil = databaseReference.child("users")
                     .child(username).child("profile").push();
             if (nickname != null) {
                 refUtil.child("username").setValue(nickname);
                 mTextViewNickname.setText(nickname);
             }
             if (profileUri != null) {
-                refUtil.child("profilePicture").setValue(profileUri);
-                mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
+                Thread saveProfilePic = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // Uri to Bitmap
+                            InputStream image_stream = getContentResolver().openInputStream(Uri.parse(profileUri));
+                            Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
+                            // Bitmap to Base64 String
+                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                            byte[] byteArray = byteArrayOutputStream .toByteArray();
+                            String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                            // Save Base64 to Firebase
+                            refUtil.child("profilePicture").setValue(encodedImage);
+                            mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
+                        } catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                saveProfilePic.start();
             }
             else ((ImageView)v.findViewById(R.id.imageView_mainDrawer))
                     .setImageResource(R.drawable.ic_signup_image_placeholder);
         }
         else {
-            DatabaseReference refUtil = databaseReference.child("users").child(username);
-            refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+            Thread loadProfilePic = new Thread(new Runnable() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.child("items").hasChildren())
-                            itemcount = dataSnapshot.child("items").getChildrenCount();
+                public void run() {
+                    DatabaseReference refUtil = databaseReference.child("users").child(username);
+                    refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.child("items").hasChildren())
+                                itemcount = dataSnapshot.child("items").getChildrenCount();
 
-                    if (dataSnapshot.child("profile").hasChildren()){
-                        for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
-                            nickname = dss.child("username").getValue(String.class);
-                            profileUri = dss.child("profilePicture").getValue(String.class);
-                            if (profileUri != null) mImageViewProfilePic.setImageURI(Uri.parse(profileUri));
-                            else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
-                            if (nickname != null) mTextViewNickname.setText(nickname);
+                            if (dataSnapshot.child("profile").hasChildren()){
+                                for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
+                                    nickname = dss.child("username").getValue(String.class);
+                                    String encodedImage = dss.child("profilePicture").getValue(String.class);
+                                    if (encodedImage != null) {
+                                        byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
+                                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                        mImageViewProfilePic.setImageBitmap(decodedByte);
+                                        Log.d("debug", "loading");
+                                        // TODO: Put this into a buffer - SQL username->profile image
+                                    }
+                                    else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                                    if (nickname != null) mTextViewNickname.setText(nickname);
+                                }
+                            }
                         }
-                    }
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {}
+                    });
                 }
-                @Override
-                public void onCancelled(DatabaseError databaseError) {}
             });
+            loadProfilePic.start();
         }
     }
 
