@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity
         ARFragment arFragment= new ARFragment();
         // Map Fragment
         com.frankenstein.frankenstein.MapFragment mapFragment = new com.frankenstein.frankenstein.MapFragment();
-        getFragmentManager().beginTransaction().replace(R.id.main_frame, arFragment).commit();
+        getFragmentManager().beginTransaction().replace(R.id.main_frame, mapFragment).commit();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 

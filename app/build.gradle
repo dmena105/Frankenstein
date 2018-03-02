@@ -39,5 +39,6 @@ dependencies {
     compile 'com.nightonke:boommenu:2.1.1'
     compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
     compile 'com.otaliastudios:cameraview:1.4.2'
+    compile 'com.google.maps.android:android-maps-utils:0.5+'
 }
 apply plugin: 'com.google.gms.google-services'
