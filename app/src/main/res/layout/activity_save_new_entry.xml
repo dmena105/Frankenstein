@@ -34,11 +34,11 @@
 
         <EditText
             android:id="@+id/editText_text_newEntry"
-            android:layout_width="350dp"
+            android:layout_width="325dp"
             android:layout_height="wrap_content"
             android:layout_below="@+id/EditText_summary_newEntry"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="11dp"
+            android:layout_marginTop="7dp"
             android:ems="10"
             android:inputType="textMultiLine"
             android:hint="Body Text"
@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true">
 
         </com.nightonke.boommenu.BoomMenuButton>

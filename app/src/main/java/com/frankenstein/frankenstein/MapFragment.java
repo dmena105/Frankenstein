@@ -57,7 +57,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
-        ServiceConnection {
+        ServiceConnection{
     private GoogleMap mMap;
     private MapView mMapView;
     private Messenger mapFragmentMessenger;
@@ -72,6 +72,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private TextView mTextViewTime;
     private TextView mTextViewSummary;
     private BoomMenuButton mBoomButton;
+    private Marker mCurrentMarkerSelected;
+    private Marker mCustomLocationMarker;
     /*private long savedMarkerId;
     private boolean savedMarkerIsSelected;
     private boolean savedPreviousLocationExists;
@@ -194,6 +196,25 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             mMap.animateCamera(savedCameraPosition);
             Log.d("debug", "currLat used: " + savedCameraPosition.toString());
         }*/
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                mCustomLocationMarker = mMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
+                        .snippet(latLng.toString()));
+            }
+        });
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                if (mCustomLocationMarker != null) {
+                    mCustomLocationMarker.remove();
+                    mCustomLocationMarker = null;
+                }
+            }
+        });
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             public View getInfoWindow(Marker marker) {
@@ -229,24 +250,27 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                if (marker != null && !marker.equals(mCurrentMarker)){
+                if (marker != null && !marker.equals(mCurrentMarker) && !marker.equals(mCustomLocationMarker)) {
                     mCurrentSelection = new GalleryEntry();
-                    final long id = ((GalleryEntry)marker.getTag()).getEntryId();
+                    final long id = ((GalleryEntry) marker.getTag()).getEntryId();
                     mCurrentSelection.setEntryId(id);
-                    Log.d("debug", "Clicked on "+ id);
+                    Log.d("debug", "Clicked on " + id);
                     DatabaseReference refUtil = MainActivity.databaseReference
                             .child("users").child(MainActivity.username).child("items");
                     refUtil.orderByChild("entryId");
                     refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.hasChildren()){
-                                for (DataSnapshot dss: dataSnapshot.getChildren()){
-                                    if (dss.child("entryId").getValue(Long.class) == id){
-                                        mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
-                                        mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
-                                        mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
-                                        mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                            if (dataSnapshot.hasChildren()) {
+                                for (DataSnapshot dss : dataSnapshot.getChildren()) {
+                                    if (dss.child("entryId").getValue(Long.class) == id) {
+                                        try {
+                                            mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
+                                            mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
+                                            mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
+                                            mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
+                                        } catch (NullPointerException e) {
+                                        }
                                     }
                                 }
                             }
@@ -255,7 +279,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                         @Override
                         public void onCancelled(DatabaseError databaseError) {}
                     });
-                    if (mCurrentSelection != null){
+                    if (mCurrentSelection != null) {
                         if (!marker.isInfoWindowShown()) {
                             mZoomLevel = mMap.getCameraPosition().zoom;
                             mPreviousLocation = mMap.getCameraPosition().target;
@@ -264,8 +288,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                             LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
                             marker.showInfoWindow();
+                            mCurrentMarkerSelected = marker;
                         }
-
                     }
                 }
                 return true;
@@ -275,7 +299,17 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
             @Override
             public void onInfoWindowLongClick(Marker marker) {
-                startActivity(new Intent(getActivity(), DisplayEntryActivity.class));
+                try{
+                    long id = ((GalleryEntry)marker.getTag()).getEntryId();
+                    Intent intent = new Intent(getActivity(), DisplayEntryActivity.class);
+                    intent.putExtra("ID", id);
+                    startActivity(intent);
+
+                } catch (NullPointerException e){
+                    Toast.makeText(mApplicationContext, "An Error Occured. Please Try Again Later"
+                            , Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
         mMap.setOnInfoWindowCloseListener(new GoogleMap.OnInfoWindowCloseListener() {
@@ -283,6 +317,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             public void onInfoWindowClose(Marker marker) {
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mPreviousLocation, mZoomLevel));
                 mCurrentSelection = null;
+                mCurrentMarkerSelected = null;
             }
         });
         Log.d("debug", "Map is ready");
@@ -297,14 +332,29 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         String imageEncodedString = null;
-                        if (dataSnapshot.child("items").hasChildren()){
-                            for (DataSnapshot dss: dataSnapshot.child("items").getChildren()){
-                                if (dataSnapshot.child("profile").hasChildren()){
-                                    for (DataSnapshot dssProfile: dataSnapshot.child("profile").getChildren()){
-                                        imageEncodedString = dssProfile.child("profilePicture").getValue(String.class);
-                                        Log.d("debug", "profile Picture source: " +  imageEncodedString);
+                        Bitmap iconBitmap = null;
+                        if (dataSnapshot.child("profile").hasChildren()){
+                            for (DataSnapshot dssProfile: dataSnapshot.child("profile").getChildren()){
+                                imageEncodedString = dssProfile.child("profilePicture").getValue(String.class);
+                                if (imageEncodedString != null){
+                                    try {
+                                        /*Uri image_uri = Uri.parse(imageEncodedString);
+                                        InputStream image_stream = getActivity().getContentResolver().openInputStream(image_uri);
+                                        Bitmap bitmap= BitmapFactory.decodeStream(image_stream);*/
+                                        // Base64 into byte arrays
+                                        byte[] decodedString = Base64.decode(imageEncodedString, Base64.DEFAULT);
+                                        // byte array into bitmap
+                                        Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                        // scale bitmap
+                                        iconBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, false);
+                                    } catch (Exception e){
+                                        Log.d("debug", "profile picture not found");
                                     }
                                 }
+                            }
+                        }
+                        if (dataSnapshot.child("items").hasChildren()){
+                            for (DataSnapshot dss: dataSnapshot.child("items").getChildren()){
                                 double lat = dss.child("latitude").getValue(Double.class);
                                 double lng = dss.child("longitude").getValue(Double.class);
                                 GalleryEntry briefMarkerInfo = new GalleryEntry();
@@ -316,16 +366,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 MarkerOptions markerOptions = new MarkerOptions()
                                         .position(new LatLng(lat, lng))
                                         .alpha((float)0.77);
-                                if (imageEncodedString != null) {
-                                    try {
-                                        Uri image_uri = Uri.parse(imageEncodedString);
-                                        InputStream image_stream = getActivity().getContentResolver().openInputStream(image_uri);
-                                        Bitmap bitmap= BitmapFactory.decodeStream(image_stream);
-                                        Bitmap iconBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, false);
-                                        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(iconBitmap));
-                                    } catch (Exception e){
-                                        Log.d("debug", "profile picture not found");
-                                    }
+                                if (iconBitmap != null) {
+                                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(iconBitmap));
                                 }
                                 else markerOptions.icon(BitmapDescriptorFactory
                                         .defaultMarker(BitmapDescriptorFactory.HUE_RED));
@@ -377,14 +419,17 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    if (mAllGalleryEntries != null){
+                                    if (mAllGalleryEntries != null && mAllGalleryEntries.size() == 0){
+                                        if (mCurrentMarkerSelected != null){
+                                            mCurrentMarkerSelected.hideInfoWindow();
+                                        }
                                         int markerIndex = (int)(Math.random() * (mAllGalleryEntries.size()));
                                         Marker marker = mAllGalleryEntries.get(markerIndex);
                                         LatLng mLoc = marker.getPosition();
                                         double lat = mLoc.latitude + 0.0065;
                                         LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
-                                        // TODO: Info Window is Not Shown
+                                        // TODO: Info Window Does Not Shown Every Time
                                         marker.showInfoWindow();
                                         Log.d("debug", ""+marker.isInfoWindowShown());
                                     }
@@ -417,8 +462,22 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 case 3:
                     TextOutsideCircleButton.Builder builder3 = new TextOutsideCircleButton.Builder()
                             .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add)
-                            .normalText("Option 4");
+                            .normalImageRes(R.drawable.ic_boom_button_add_from_marker)
+                            .normalText("New From Marker")
+                            .listener(new OnBMClickListener() {
+                                @Override
+                                public void onBoomButtonClick(int index) {
+                                    if (mCustomLocationMarker == null)
+                                        Toast.makeText(mApplicationContext
+                                                , "Please long click on the map to place a marker first"
+                                                , Toast.LENGTH_SHORT).show();
+                                    else {
+                                        Intent newEntry = new Intent(getActivity(), EditNewEntryActivity.class);
+                                        newEntry.putExtra("location", mCustomLocationMarker.getPosition());
+                                        startActivity(newEntry);
+                                    }
+                                }
+                            });
                     mBoomButton.addBuilder(builder3);
                     break;
                 case 4:
