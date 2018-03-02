@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,7 +55,6 @@ public class UserProfileActivity extends AppCompatActivity {
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private DatabaseReference mDatabase;
-
 
     //Toolbar
     android.support.v7.widget.Toolbar toolbar;
@@ -191,9 +191,12 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             }
         });
+
+
         mCancelLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "OnClicked ScrollView");
                 if (textVisible){
                     com.transitionseverywhere.TransitionManager.beginDelayedTransition(mTransitionGroup);
                     textVisible = !textVisible;
@@ -201,6 +204,18 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (textVisible){
+            com.transitionseverywhere.TransitionManager.beginDelayedTransition(mTransitionGroup);
+            textVisible = !textVisible;
+            mConfirmLogout.setVisibility(View.GONE);
+        }
+        else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -277,10 +292,25 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             });
             Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
 }
+
+/*
+
+// Create a storage reference from our app
+StorageReference storageRef = storage.getReference();
+
+// Create a reference to "mountains.jpg"
+StorageReference mountainsRef = storageRef.child("mountains.jpg");
+
+// Create a reference to 'images/mountains.jpg'
+StorageReference mountainImagesRef = storageRef.child("images/mountains.jpg");
+
+// While the file names are the same, the references point to different files
+mountainsRef.getName().equals(mountainImagesRef.getName());    // true
+mountainsRef.getPath().equals(mountainImagesRef.getPath());    // false
+
+ */
