@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
@@ -132,6 +133,7 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
 
+        email.setText(mFirebaseUser.getEmail());
         //This is to load the UserName and Image from FireBase
         DatabaseReference nickname = mDatabase.child("users").child(username).child("profile");
         nickname.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -139,15 +141,15 @@ public class UserProfileActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.hasChildren()) {
                     for (DataSnapshot dss : dataSnapshot.getChildren()) {
-                        String usernam = (String) dss.child("username").getValue();
-                        String profilePicURI = (String) dss.child("profilePicture").getValue();
-                        if (profilePicURI != null){
-                            Log.d(TAG, "UserProfile: The PicUri from FireBase was null");
-                            imageView.setImageURI(Uri.parse(profilePicURI));
+                        String un = (String) dss.child("username").getValue();
+                        String encodedImage = dss.child("profilePicture").getValue(String.class);
+                        if (encodedImage != null) {
+                            byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
+                            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                            imageView.setImageBitmap(decodedByte);
                         }
                         else imageView.setImageResource(R.drawable.ic_signup_image_placeholder);
-                        nickName.setText(usernam);
-                        email.setText(mFirebaseUser.getEmail());
+                        if (un != null) nickName.setText(un);
                     }
                 }
             }
@@ -177,7 +179,6 @@ public class UserProfileActivity extends AppCompatActivity {
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "LogOut Clicked");
                 if (textVisible){
                     mFirebaseAuth.signOut();
                     Intent login_intent = new Intent(mContext, LogInActivity.class);
@@ -196,7 +197,6 @@ public class UserProfileActivity extends AppCompatActivity {
         mCancelLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "OnClicked ScrollView");
                 if (textVisible){
                     com.transitionseverywhere.TransitionManager.beginDelayedTransition(mTransitionGroup);
                     textVisible = !textVisible;
@@ -258,6 +258,23 @@ public class UserProfileActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         //Listen to for when the user presses the save Button
         if (item.getItemId() == R.id.action_save) {
+
+            new SavingTask().execute();
+
+            Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public class SavingTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
             String username = mFirebaseUser.getUid();
             final DatabaseReference profile = mDatabase.child("users").child(username).child("profile");
             profile.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -291,26 +308,12 @@ public class UserProfileActivity extends AppCompatActivity {
 
                 }
             });
-            Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
-            finish();
+            return null;
         }
-        return super.onOptionsItemSelected(item);
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
     }
 }
-
-/*
-
-// Create a storage reference from our app
-StorageReference storageRef = storage.getReference();
-
-// Create a reference to "mountains.jpg"
-StorageReference mountainsRef = storageRef.child("mountains.jpg");
-
-// Create a reference to 'images/mountains.jpg'
-StorageReference mountainImagesRef = storageRef.child("images/mountains.jpg");
-
-// While the file names are the same, the references point to different files
-mountainsRef.getName().equals(mountainImagesRef.getName());    // true
-mountainsRef.getPath().equals(mountainImagesRef.getPath());    // false
-
- */

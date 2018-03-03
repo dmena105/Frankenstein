@@ -1,5 +1,8 @@
 package com.frankenstein.frankenstein;
 
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
+
 import static java.lang.Math.abs;
 
 /**
@@ -7,6 +10,12 @@ import static java.lang.Math.abs;
  */
 
 public class Global {
+    static SensorManager mSensorManager;
+    static Sensor accelerometer;
+    static Sensor magnetometer;
+    static ARFragment arFragment;
+    static MapFragment mapFragment;
+
     public static float angleDiff(float target, float current, int frames){
         float diff;
         float ret;

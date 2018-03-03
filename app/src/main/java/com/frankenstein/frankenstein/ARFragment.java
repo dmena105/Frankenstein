@@ -28,7 +28,7 @@ import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 
 
-public class ARFragment extends android.app.Fragment implements SensorEventListener {
+public class ARFragment extends android.app.Fragment {
     //Currently displayed angles
     Float cAzimuth = (float)0.0;
     Float cPitch = (float)0.0;
@@ -119,24 +119,18 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
         mCustomDrawableView = new CustomDrawableView(getContext());
         FrameLayout frameLayout = view.findViewById(R.id.frame);
         frameLayout.addView(mCustomDrawableView);
-        mSensorManager = (SensorManager)getActivity().getSystemService(SENSOR_SERVICE);
-        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
-        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
         cameraView.start();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mSensorManager.unregisterListener(this);
         cameraView.stop();
     }
 
@@ -145,32 +139,15 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
         super.onDestroy();
         cameraView.destroy();
     }
-
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {  }
-
-    float[] mGravity;
-    float[] mGeomagnetic;
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-            mGravity = lowPassFilter(event.values, mGravity);
-        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-            mGeomagnetic = lowPassFilter(event.values, mGeomagnetic);
-        if (mGravity != null && mGeomagnetic != null) {
-            float R[] = new float[9];
-            float I[] = new float[9];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            if (success) {
-                float orientation[] = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
-                        abs(roll-toDegrees(orientation[2])) > 5){
-                    azimuth = (float)toDegrees(orientation[0])+180;
-                    pitch = (float)toDegrees(orientation[1])+180;
-                    roll = (float)toDegrees(orientation[2])+90;
-                    Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
-                    mCustomDrawableView.invalidate();
-                }
-            }
+    public void onSensorChanged(float[] orientation) {
+        Log.d("gb", "Arsensor");
+        if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
+                abs(roll-toDegrees(orientation[2])) > 5){
+            azimuth = (float)toDegrees(orientation[0])+180;
+            pitch = (float)toDegrees(orientation[1])+180;
+            roll = (float)toDegrees(orientation[2])+90;
+            Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
+            mCustomDrawableView.invalidate();
         }
     }
 
