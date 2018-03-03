@@ -288,7 +288,6 @@ public class MainActivity extends AppCompatActivity
     float[] mGeomagnetic;
     @Override
     public void onSensorChanged(SensorEvent event) {
-        Log.d("gb", "Main");
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
             mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)

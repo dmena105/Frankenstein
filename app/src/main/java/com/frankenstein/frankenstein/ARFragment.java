@@ -77,9 +77,9 @@ public class ARFragment extends android.app.Fragment {
             int height = displayMetrics.heightPixels;
             int width = displayMetrics.widthPixels;
             this.North = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
-                    (int)(width*.9), (int)(height*.9), 1f,0f,width,height);
+                    (int)(width*.9), (int)(height*.9), 0f,0f,width,height);
             this.NorthF = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
-                    (int)(width*.9), (int)(height*.9), 10f,0f,width,height);
+                    (int)(width*.9), (int)(height*.9), 0.0005f,0f,width,height);
             paint.setColor(0xff00ff00);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(5);
@@ -101,10 +101,10 @@ public class ARFragment extends android.app.Fragment {
                 }
                 //Acting weird. Suspended, will ask about removal/readding
                 //canvas.rotate(-(cRoll-90), getWidth()/2, getHeight()/2);
-                Rect n = North.getCurrentBound(cAzimuth, cPitch);
+                Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
-                n = NorthF.getCurrentBound(cAzimuth, cPitch);
+                n = NorthF.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
                 if(abs(azimuth-cAzimuth)> 2 || abs(pitch-cPitch) > 2){
