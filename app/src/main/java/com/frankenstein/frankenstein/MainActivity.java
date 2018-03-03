@@ -30,6 +30,7 @@ import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.MapFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -47,6 +48,7 @@ import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
-        Log.d("debug", "username: " + username);
+        //Log.d("debug", "username: " + username);
 
         ARFragment arFragment= new ARFragment();
         // Map Fragment
@@ -101,7 +103,7 @@ public class MainActivity extends AppCompatActivity
         });
         mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
-        // 0 is sign up activity, 1 is signin activity
+        // 0 is sign up activity, 1 is sign-in activity
         int mode = getIntent().getIntExtra("mode", 1);
         if (mode == 0){
             nickname = getIntent().getStringExtra("nickname");
@@ -157,7 +159,6 @@ public class MainActivity extends AppCompatActivity
                                         byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
-                                        Log.d("debug", "loading");
                                         // TODO: Put this into a buffer - SQL username->profile image
                                     }
                                     else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
@@ -172,6 +173,37 @@ public class MainActivity extends AppCompatActivity
             });
             loadProfilePic.start();
         }
+
+        //Listener that allows for the nav view to update when firebase changes somethings
+        //This is mainly useful for when we return from the USERPROFILE ACTIVITY
+        String username = mFirebaseUser.getUid();
+        DatabaseReference navViewUpdate = databaseReference.child("users").child(username).child("profile");
+        navViewUpdate.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {}
+            //Load the data into the NAV view
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                for (DataSnapshot dss : dataSnapshot.getChildren()) {
+                    nickname = dss.child("username").getValue(String.class);
+                    String encodedImage = dss.child("profilePicture").getValue(String.class);
+                    if (encodedImage != null) {
+                        byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
+                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                        mImageViewProfilePic.setImageBitmap(decodedByte);
+                    }
+                    else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                    if (nickname != null) mTextViewNickname.setText(nickname);
+                }
+            }
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
     }
 
     @Override
