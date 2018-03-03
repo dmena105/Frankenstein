@@ -56,6 +56,8 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import static android.content.Context.SENSOR_SERVICE;
+import static java.lang.Math.abs;
+import static java.lang.Math.toDegrees;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
@@ -69,6 +71,8 @@ public class MainActivity extends AppCompatActivity
     private String profileUri;
     private ImageView mImageViewProfilePic;
     private TextView mTextViewNickname;
+    private int mode = 0;
+    private int switchAngle = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +88,7 @@ public class MainActivity extends AppCompatActivity
 
         Global.arFragment= new ARFragment();
         // Map Fragment
-        com.frankenstein.frankenstein.MapFragment mapFragment = new com.frankenstein.frankenstein.MapFragment();
+        Global.mapFragment = new com.frankenstein.frankenstein.MapFragment();
         getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.arFragment).commit();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -274,10 +278,38 @@ public class MainActivity extends AppCompatActivity
         Global.mSensorManager.unregisterListener(this);
     }
 
+    float[] mGravity;
+    float[] mGeomagnetic;
     @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
+    public void onSensorChanged(SensorEvent event) {
         Log.d("gb", "Main");
-        Global.arFragment.onSensorChanged(sensorEvent);
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                Log.d("s1", ""+toDegrees(orientation[1]));
+                if(abs(toDegrees(orientation[1])) < switchAngle && mode == 0){
+                    Log.d("s1", "Going to map");
+                    getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.mapFragment).commit();
+                    mode = 1;
+                } else if(abs(toDegrees(orientation[1])) >= switchAngle && mode == 1){
+                    Log.d("s1", "Going to ar");
+                    getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                    Global.arFragment.onSensorChanged(orientation);
+                    mode = 0;
+                } else if (abs(toDegrees(orientation[1])) >= switchAngle){
+                    Log.d("s1", "updating ar");
+                    Global.arFragment.onSensorChanged(orientation);
+                }
+            }
+        }
     }
 
     @Override

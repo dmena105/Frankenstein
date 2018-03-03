@@ -139,31 +139,15 @@ public class ARFragment extends android.app.Fragment {
         super.onDestroy();
         cameraView.destroy();
     }
-
-    float[] mGravity;
-    float[] mGeomagnetic;
-    public void onSensorChanged(SensorEvent event) {
+    public void onSensorChanged(float[] orientation) {
         Log.d("gb", "Arsensor");
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-            mGravity = lowPassFilter(event.values, mGravity);
-        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-            mGeomagnetic = lowPassFilter(event.values, mGeomagnetic);
-        if (mGravity != null && mGeomagnetic != null) {
-            float R[] = new float[9];
-            float I[] = new float[9];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            if (success) {
-                float orientation[] = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
-                        abs(roll-toDegrees(orientation[2])) > 5){
-                    azimuth = (float)toDegrees(orientation[0])+180;
-                    pitch = (float)toDegrees(orientation[1])+180;
-                    roll = (float)toDegrees(orientation[2])+90;
-                    Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
-                    mCustomDrawableView.invalidate();
-                }
-            }
+        if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
+                abs(roll-toDegrees(orientation[2])) > 5){
+            azimuth = (float)toDegrees(orientation[0])+180;
+            pitch = (float)toDegrees(orientation[1])+180;
+            roll = (float)toDegrees(orientation[2])+90;
+            Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
+            mCustomDrawableView.invalidate();
         }
     }
 
