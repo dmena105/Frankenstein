@@ -49,6 +49,7 @@ import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -93,10 +94,12 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         super.onCreate(savedInstanceState);
         mApplicationContext = (Application)getActivity().getApplicationContext();
         mAllMarkers = new ArrayList<>();
+
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        mBoomButton = getActivity().findViewById(R.id.boombutton_mainMap);
         setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -157,12 +160,14 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onResume() {
         super.onResume();
         mMapView.onResume();
+
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mMapView.onPause();
+
     }
 
     @Override
@@ -170,6 +175,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         super.onDestroy();
         mMapView.onDestroy();
         if (TrackingService.isRunning()) mApplicationContext.unbindService(this);
+        Log.d("debug", "builder cleared Map");
+
     }
 
     @Override
@@ -381,108 +388,9 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         loadGalleryEntryFromCloud.run();
 
         // BoomButton setup
-        mBoomButton = getActivity().findViewById(R.id.boombutton_main);
-        mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-        mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-        mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
-        mBoomButton.setBoomEnum(BoomEnum.RANDOM);
-        for (int i=0; i<mBoomButton.getPiecePlaceEnum().pieceNumber(); i++){
-            switch (i) {
-                case 0:
-                    TextOutsideCircleButton.Builder builder0 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_current_location)
-                            .normalText("Me")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mCurrentMarker != null){
-                                        mMap.animateCamera(CameraUpdateFactory
-                                                .newLatLngZoom(mCurrentMarker.getPosition(), 16));
-                                    }
-                                    else Toast.makeText(getActivity()
-                                            , "Current Location Not Available", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                    mBoomButton.addBuilder(builder0);
-                    break;
-                case 1:
-                    TextOutsideCircleButton.Builder builder1 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_random)
-                            .normalText("Random")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mAllMarkers.size() != 0 && mAllMarkers != null){
-                                        if (mCurrentMarkerSelected != null){
-                                            mCurrentMarkerSelected.hideInfoWindow();
-                                        }
-                                        int markerIndex = (int)(Math.random()
-                                                * (mAllMarkers.size()));
-                                        Marker marker = mAllMarkers.get(markerIndex);
-                                        LatLng cameraLocation = marker.getPosition();
-                                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 16));
-                                        // TODO: Info Window Does Not Show Every Time
-                                        marker.showInfoWindow();
-                                        Log.d("debug", ""+marker.isInfoWindowShown());
-                                    }
-                                    else Toast.makeText(getActivity()
-                                            , "No Posts Are Available", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                    mBoomButton.addBuilder(builder1);
-                    break;
-                case 2:
-                    TextOutsideCircleButton.Builder builder2 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add)
-                            .normalText("New")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mCurrentMarker == null) Toast.makeText(getActivity()
-                                        , "Location cannot be determined, Please try again later"
-                                            , Toast.LENGTH_SHORT).show();
-                                    else {
-                                        Intent newEntry = new Intent(getActivity(), EditNewEntryActivity.class);
-                                        newEntry.putExtra("location", mCurrentMarker.getPosition());
-                                        startActivity(newEntry);
-                                    }
-                                }
-                            });
-                    mBoomButton.addBuilder(builder2);
-                    break;
-                case 3:
-                    TextOutsideCircleButton.Builder builder3 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add_from_marker)
-                            .normalText("New From Marker")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mCustomLocationMarker == null)
-                                        Toast.makeText(mApplicationContext
-                                                , "Please long click on the map to place a marker first"
-                                                , Toast.LENGTH_SHORT).show();
-                                    else {
-                                        Intent newEntry = new Intent(getActivity(), EditNewEntryActivity.class);
-                                        newEntry.putExtra("location", mCustomLocationMarker.getPosition());
-                                        startActivity(newEntry);
-                                    }
-                                }
-                            });
-                    mBoomButton.addBuilder(builder3);
-                    break;
-                case 4:
-                    TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add)
-                            .normalText("Option 5");
-                    mBoomButton.addBuilder(builder4);
-                    break;
-            }
-        }
+        BoomButtonDisplayMain boomDisplay = new BoomButtonDisplayMain(mBoomButton);
+        boomDisplay.mapFragmentDisplay(getActivity(), mMap, mCurrentMarker, mAllMarkers
+                , mCurrentMarkerSelected, mCustomLocationMarker);
     }
 
     // For version above 23, check permission before initializing location services.

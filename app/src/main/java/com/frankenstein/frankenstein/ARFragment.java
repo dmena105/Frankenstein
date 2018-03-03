@@ -1,6 +1,7 @@
 package com.frankenstein.frankenstein;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -18,10 +19,24 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
+import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
+import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
+import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.ButtonEnum;
+import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.Gesture;
 import com.otaliastudios.cameraview.GestureAction;
+
+import java.util.ArrayList;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static java.lang.Math.abs;
@@ -29,6 +44,8 @@ import static java.lang.Math.toDegrees;
 
 
 public class ARFragment extends android.app.Fragment {
+    private BoomMenuButton mBoomButton;
+    private ArrayList<BoomButtonBuilder> builders;
     //Currently displayed angles
     Float cAzimuth = (float)0.0;
     Float cPitch = (float)0.0;
@@ -119,6 +136,9 @@ public class ARFragment extends android.app.Fragment {
         mCustomDrawableView = new CustomDrawableView(getContext());
         FrameLayout frameLayout = view.findViewById(R.id.frame);
         frameLayout.addView(mCustomDrawableView);
+        mBoomButton = getActivity().findViewById(R.id.boombutton_mainAR);
+        BoomButtonDisplayMain displayMain = new BoomButtonDisplayMain(mBoomButton);
+        displayMain.arFragmentDisplay(getActivity());
         return view;
     }
 
@@ -138,6 +158,8 @@ public class ARFragment extends android.app.Fragment {
     public void onDestroy() {
         super.onDestroy();
         cameraView.destroy();
+        Log.d("debug", "builder cleared AR");
+
     }
     public void onSensorChanged(float[] orientation) {
         Log.d("gb", "Arsensor");

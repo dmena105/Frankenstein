@@ -42,6 +42,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.nightonke.boommenu.Animation.BoomEnum;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextInsideCircleButton;
@@ -54,6 +55,7 @@ import org.w3c.dom.Text;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static java.lang.Math.abs;
@@ -73,11 +75,15 @@ public class MainActivity extends AppCompatActivity
     private TextView mTextViewNickname;
     private int mode = 0;
     private int switchAngle = 20;
+    private BoomMenuButton mMapButton;
+    private BoomMenuButton mARButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mMapButton = findViewById(R.id.boombutton_mainMap);
+        mARButton = findViewById(R.id.boombutton_mainAR);
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
@@ -299,11 +305,15 @@ public class MainActivity extends AppCompatActivity
                     Log.d("s1", "Going to map");
                     getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.mapFragment).commit();
                     mode = 1;
+                    mARButton.setVisibility(View.GONE);
+                    mMapButton.setVisibility(View.VISIBLE);
                 } else if(abs(toDegrees(orientation[1])) >= switchAngle && mode == 1){
                     Log.d("s1", "Going to ar");
                     getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
                     Global.arFragment.onSensorChanged(orientation);
                     mode = 0;
+                    mARButton.setVisibility(View.VISIBLE);
+                    mMapButton.setVisibility(View.GONE);
                 } else if (abs(toDegrees(orientation[1])) >= switchAngle){
                     Log.d("s1", "updating ar");
                     Global.arFragment.onSensorChanged(orientation);
@@ -314,4 +324,5 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {}
+
 }
