@@ -6,6 +6,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -51,8 +55,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import static android.content.Context.SENSOR_SERVICE;
+
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
 
     private String TAG = "TESTING123";
     private FirebaseUser mFirebaseUser;
@@ -72,11 +78,14 @@ public class MainActivity extends AppCompatActivity
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
         //Log.d("debug", "username: " + username);
+        Global.mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        Global.accelerometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Global.magnetometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        ARFragment arFragment= new ARFragment();
+        Global.arFragment= new ARFragment();
         // Map Fragment
         com.frankenstein.frankenstein.MapFragment mapFragment = new com.frankenstein.frankenstein.MapFragment();
-        getFragmentManager().beginTransaction().replace(R.id.main_frame, arFragment).commit();
+        getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.arFragment).commit();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -252,4 +261,25 @@ public class MainActivity extends AppCompatActivity
         itemcount = savedInstanceState.getLong("itemcount");
     }
 
+    @Override
+    public void onResume(){
+        super.onResume();
+        Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
+        Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        Global.mSensorManager.unregisterListener(this);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        Log.d("gb", "Main");
+        Global.arFragment.onSensorChanged(sensorEvent);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {}
 }

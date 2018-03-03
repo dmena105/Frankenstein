@@ -28,7 +28,7 @@ import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 
 
-public class ARFragment extends android.app.Fragment implements SensorEventListener {
+public class ARFragment extends android.app.Fragment {
     //Currently displayed angles
     Float cAzimuth = (float)0.0;
     Float cPitch = (float)0.0;
@@ -119,24 +119,18 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
         mCustomDrawableView = new CustomDrawableView(getContext());
         FrameLayout frameLayout = view.findViewById(R.id.frame);
         frameLayout.addView(mCustomDrawableView);
-        mSensorManager = (SensorManager)getActivity().getSystemService(SENSOR_SERVICE);
-        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
-        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
         cameraView.start();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mSensorManager.unregisterListener(this);
         cameraView.stop();
     }
 
@@ -146,11 +140,10 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
         cameraView.destroy();
     }
 
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {  }
-
     float[] mGravity;
     float[] mGeomagnetic;
     public void onSensorChanged(SensorEvent event) {
+        Log.d("gb", "Arsensor");
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
             mGravity = lowPassFilter(event.values, mGravity);
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
