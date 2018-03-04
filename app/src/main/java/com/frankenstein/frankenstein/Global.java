@@ -1,5 +1,6 @@
 package com.frankenstein.frankenstein;
 
+import android.app.Application;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 
@@ -7,9 +8,11 @@ import static java.lang.Math.abs;
 
 /**
  * Created by Diyogon on 2/28/18.
+ *
+ * Class that holds all Global Varibles
  */
 
-public class Global {
+public class Global extends Application{
     static SensorManager mSensorManager;
     static Sensor accelerometer;
     static Sensor magnetometer;
@@ -57,5 +60,20 @@ public class Global {
                 return d2;
             }
         }
+    }
+
+    private int unitPreference = 0;
+    private int entryNumber = 1;
+    public int getUnitPreference() {
+        return unitPreference;
+    }
+    public int getEntryNumber(){
+        return entryNumber;
+    }
+    public void setUnitPreference(int unitPreference) {
+        this.unitPreference = unitPreference;
+    }
+    public void setEntryNumber(int entryNumber){
+        this.entryNumber = entryNumber;
     }
 }
