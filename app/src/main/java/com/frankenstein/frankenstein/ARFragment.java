@@ -1,6 +1,7 @@
 package com.frankenstein.frankenstein;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -18,17 +19,33 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
+import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
+import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
+import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.ButtonEnum;
+import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.Gesture;
 import com.otaliastudios.cameraview.GestureAction;
+
+import java.util.ArrayList;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 
 
-public class ARFragment extends android.app.Fragment implements SensorEventListener {
+public class ARFragment extends android.app.Fragment {
+    private BoomMenuButton mBoomButton;
+    private ArrayList<BoomButtonBuilder> builders;
     //Currently displayed angles
     Float cAzimuth = (float)0.0;
     Float cPitch = (float)0.0;
@@ -60,9 +77,9 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
             int height = displayMetrics.heightPixels;
             int width = displayMetrics.widthPixels;
             this.North = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
-                    (int)(width*.9), (int)(height*.9), 1f,0f,width,height);
+                    (int)(width*.9), (int)(height*.9), 0f,0f,width,height);
             this.NorthF = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
-                    (int)(width*.9), (int)(height*.9), 10f,0f,width,height);
+                    (int)(width*.9), (int)(height*.9), 0.0005f,0f,width,height);
             paint.setColor(0xff00ff00);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(5);
@@ -84,10 +101,10 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
                 }
                 //Acting weird. Suspended, will ask about removal/readding
                 //canvas.rotate(-(cRoll-90), getWidth()/2, getHeight()/2);
-                Rect n = North.getCurrentBound(cAzimuth, cPitch);
+                Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
-                n = NorthF.getCurrentBound(cAzimuth, cPitch);
+                n = NorthF.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
                 if(abs(azimuth-cAzimuth)> 2 || abs(pitch-cPitch) > 2){
@@ -119,24 +136,21 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
         mCustomDrawableView = new CustomDrawableView(getContext());
         FrameLayout frameLayout = view.findViewById(R.id.frame);
         frameLayout.addView(mCustomDrawableView);
-        mSensorManager = (SensorManager)getActivity().getSystemService(SENSOR_SERVICE);
-        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mBoomButton = getActivity().findViewById(R.id.boombutton_mainAR);
+        BoomButtonDisplayMain displayMain = new BoomButtonDisplayMain(mBoomButton);
+        displayMain.arFragmentDisplay(getActivity());
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
-        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
         cameraView.start();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mSensorManager.unregisterListener(this);
         cameraView.stop();
     }
 
@@ -144,33 +158,18 @@ public class ARFragment extends android.app.Fragment implements SensorEventListe
     public void onDestroy() {
         super.onDestroy();
         cameraView.destroy();
+        Log.d("debug", "builder cleared AR");
+
     }
-
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {  }
-
-    float[] mGravity;
-    float[] mGeomagnetic;
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-            mGravity = lowPassFilter(event.values, mGravity);
-        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-            mGeomagnetic = lowPassFilter(event.values, mGeomagnetic);
-        if (mGravity != null && mGeomagnetic != null) {
-            float R[] = new float[9];
-            float I[] = new float[9];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            if (success) {
-                float orientation[] = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
-                        abs(roll-toDegrees(orientation[2])) > 5){
-                    azimuth = (float)toDegrees(orientation[0])+180;
-                    pitch = (float)toDegrees(orientation[1])+180;
-                    roll = (float)toDegrees(orientation[2])+90;
-                    Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
-                    mCustomDrawableView.invalidate();
-                }
-            }
+    public void onSensorChanged(float[] orientation) {
+        Log.d("gb", "Arsensor");
+        if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
+                abs(roll-toDegrees(orientation[2])) > 5){
+            azimuth = (float)toDegrees(orientation[0])+180;
+            pitch = (float)toDegrees(orientation[1])+180;
+            roll = (float)toDegrees(orientation[2])+90;
+            Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
+            mCustomDrawableView.invalidate();
         }
     }
 

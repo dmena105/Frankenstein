@@ -1,11 +1,16 @@
 package com.frankenstein.frankenstein;
 
 import android.graphics.Rect;
+import android.location.Location;
+import android.location.LocationManager;
 import android.util.Log;
+
+import com.google.android.gms.maps.model.LatLng;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.log;
 import static java.lang.Math.sin;
+import static java.lang.Math.toDegrees;
 
 /**
  * Created by Diyogon on 2/27/18.
@@ -40,11 +45,29 @@ public class DisplayObject {
         this.height=height;
     }
 
-    public Rect getCurrentBound(Float azimuth, Float pitch){
-        float scale = 1/this.lat;
+    public Rect getCurrentBound(Float azimuth, Float pitch, Float lat, Float lng){
+        float[] mdistance = new float[3];
+        Location.distanceBetween(lat, lng, this.lat, this.lng, mdistance);
+        float distance = abs(mdistance[0]);
+        Log.d("gb3", "distance = "+distance);
+        if(distance > 100 || distance < 0){
+            return null;
+        }
+        float scale = 1.0f/mdistance[0];
         //The object is only visible if it's within 90 degrees of the camera
-        float fract = Global.angleDist(azimuth, this.centerAngles[0])/(float)log(1+scale);
-        Log.d("gb3", "fract = "+fract+" azimuth = "+azimuth);
+        float fract;
+        if(distance < 5) {
+            fract = Global.angleDist(azimuth, this.centerAngles[0]) / (float) log(1 + scale);
+        } else {
+            Location start = new Location("");
+            start.setLatitude(this.lat);
+            start.setLongitude(this.lng);
+            Location goal = new Location("");
+            goal.setLatitude(lat);
+            goal.setLongitude(lng);
+            fract = Global.angleDist(azimuth, (float)toDegrees(start.bearingTo(goal))%360)/(float)log(1+scale);
+            Log.d("gb3", "Angle = "+(float)toDegrees(start.bearingTo(goal))%360);
+        }
         if(abs(fract) > 90){
             return null;
         }
@@ -64,5 +87,21 @@ public class DisplayObject {
         int bottom = centerY + (int)(scale*spanY/2);
         Rect ret = new Rect(left, top, right, bottom);
         return ret;
+    }
+
+    private double meterDistanceBetweenPoints(float lat_a, float lng_a, float lat_b, float lng_b) {
+        float pk = (float) (180.f/Math.PI);
+
+        float a1 = lat_a / pk;
+        float a2 = lng_a / pk;
+        float b1 = lat_b / pk;
+        float b2 = lng_b / pk;
+
+        double t1 = Math.cos(a1) * Math.cos(a2) * Math.cos(b1) * Math.cos(b2);
+        double t2 = Math.cos(a1) * Math.sin(a2) * Math.cos(b1) * Math.sin(b2);
+        double t3 = Math.sin(a1) * Math.sin(b1);
+        double tt = Math.acos(t1 + t2 + t3);
+
+        return 6366000 * tt;
     }
 }

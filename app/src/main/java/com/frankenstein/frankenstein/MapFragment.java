@@ -34,15 +34,22 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.internal.zzp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -55,6 +62,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 
 public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
         ServiceConnection{
@@ -64,7 +72,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
     private Marker mCurrentMarker = null;
-    private ArrayList<Marker> mAllGalleryEntries;
     private GalleryEntry mCurrentSelection;
     private float mZoomLevel;
     private LatLng mPreviousLocation;
@@ -74,6 +81,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private BoomMenuButton mBoomButton;
     private Marker mCurrentMarkerSelected;
     private Marker mCustomLocationMarker;
+    private ClusterManager<ClusteredMarker> mClusterManager;
+    private ArrayList<Marker> mAllMarkers;
     /*private long savedMarkerId;
     private boolean savedMarkerIsSelected;
     private boolean savedPreviousLocationExists;
@@ -84,11 +93,13 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         mApplicationContext = (Application)getActivity().getApplicationContext();
-        mAllGalleryEntries = new ArrayList<>();
+        mAllMarkers = new ArrayList<>();
+
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        mBoomButton = getActivity().findViewById(R.id.boombutton_mainMap);
         setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -149,12 +160,14 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onResume() {
         super.onResume();
         mMapView.onResume();
+
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mMapView.onPause();
+
     }
 
     @Override
@@ -162,6 +175,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         super.onDestroy();
         mMapView.onDestroy();
         if (TrackingService.isRunning()) mApplicationContext.unbindService(this);
+        Log.d("debug", "builder cleared Map");
+
     }
 
     @Override
@@ -196,26 +211,47 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             mMap.animateCamera(savedCameraPosition);
             Log.d("debug", "currLat used: " + savedCameraPosition.toString());
         }*/
-
-        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+        mClusterManager = new ClusterManager<>(getActivity(), mMap);
+        mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<ClusteredMarker>() {
             @Override
-            public void onMapLongClick(LatLng latLng) {
-                mCustomLocationMarker = mMap.addMarker(new MarkerOptions()
-                        .position(latLng)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
-                        .snippet(latLng.toString()));
-            }
-        });
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                if (mCustomLocationMarker != null) {
-                    mCustomLocationMarker.remove();
-                    mCustomLocationMarker = null;
+            public boolean onClusterItemClick(ClusteredMarker clusteredMarker) {
+                mCurrentSelection = clusteredMarker.getGalleryEntry();
+                mZoomLevel = mMap.getCameraPosition().zoom;
+                mPreviousLocation = mMap.getCameraPosition().target;
+                LatLng mLoc = new LatLng(mCurrentSelection.getLatitude(), mCurrentSelection.getLongitude());
+                double lat = mLoc.latitude + 0.0065;
+                LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
+                for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
+                    if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
+                            marker.getPosition().longitude == clusteredMarker.getPosition().longitude) {
+                        mCurrentMarkerSelected = marker;
+                        marker.showInfoWindow();
+                        break;
+                    }
                 }
+                return true;
             }
         });
-        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+        mClusterManager.setOnClusterClickListener(new ClusterManager.OnClusterClickListener<ClusteredMarker>() {
+            @Override
+            public boolean onClusterClick(Cluster<ClusteredMarker> cluster) {
+                if (cluster.getSize() < 5)
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cluster.getPosition(), 16));
+                else if (cluster.getSize() < 10)
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cluster.getPosition(), 14));
+                else
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cluster.getPosition(), 13));
+                return true;
+            }
+        });
+        mMap.setOnMarkerClickListener(mClusterManager);
+        mMap.setOnCameraIdleListener(mClusterManager);
+        MarkerRenderer renderer = new MarkerRenderer(getActivity(), mMap);
+        mClusterManager.setRenderer(renderer);
+
+        mClusterManager.getMarkerCollection().setOnInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             public View getInfoWindow(Marker marker) {
                 if (mCurrentSelection != null){
@@ -223,9 +259,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     mImageViewDialog = window.findViewById(R.id.imageView_dialog);
                     mTextViewTime = window.findViewById(R.id.textView_dialogTime);
                     mTextViewSummary = window.findViewById(R.id.textView_dialogSummary);
-                    GalleryEntry markerInfo = (GalleryEntry) marker.getTag();
-                    if (markerInfo.getPicture() != null) {
-                        byte[] decodedString = Base64.decode(markerInfo.getPicture(), Base64.DEFAULT);
+                    if (mCurrentSelection.getPicture() != null) {
+                        byte[] decodedString = Base64.decode(mCurrentSelection.getPicture(), Base64.DEFAULT);
                         Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                         mImageViewDialog.setImageBitmap(decodedBitmap);
                     }
@@ -234,9 +269,9 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     }
                     DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
                     Calendar calendar = Calendar.getInstance();
-                    calendar.setTimeInMillis(markerInfo.getPostTime());
+                    calendar.setTimeInMillis(mCurrentSelection.getPostTime());
                     mTextViewTime.setText(formatter.format(calendar.getTime()));
-                    mTextViewSummary.setText(markerInfo.getSummary());
+                    mTextViewSummary.setText(mCurrentSelection.getSummary());
                     return window;
                 }
                 return null;
@@ -247,60 +282,13 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 return null;
             }
         });
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                if (marker != null && !marker.equals(mCurrentMarker) && !marker.equals(mCustomLocationMarker)) {
-                    mCurrentSelection = new GalleryEntry();
-                    final long id = ((GalleryEntry) marker.getTag()).getEntryId();
-                    mCurrentSelection.setEntryId(id);
-                    Log.d("debug", "Clicked on " + id);
-                    DatabaseReference refUtil = MainActivity.databaseReference
-                            .child("users").child(MainActivity.username).child("items");
-                    refUtil.orderByChild("entryId");
-                    refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.hasChildren()) {
-                                for (DataSnapshot dss : dataSnapshot.getChildren()) {
-                                    if (dss.child("entryId").getValue(Long.class) == id) {
-                                        try {
-                                            mCurrentSelection.setLatitude(dss.child("latitude").getValue(Double.class));
-                                            mCurrentSelection.setLongitude(dss.child("longitude").getValue(Double.class));
-                                            mCurrentSelection.setPostText(dss.child("postText").getValue(String.class));
-                                            mCurrentSelection.setPostTime(dss.child("postTime").getValue(Long.class));
-                                        } catch (NullPointerException e) {
-                                        }
-                                    }
-                                }
-                            }
-                        }
+        mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {}
-                    });
-                    if (mCurrentSelection != null) {
-                        if (!marker.isInfoWindowShown()) {
-                            mZoomLevel = mMap.getCameraPosition().zoom;
-                            mPreviousLocation = mMap.getCameraPosition().target;
-                            LatLng mLoc = marker.getPosition();
-                            double lat = mLoc.latitude + 0.0065;
-                            LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
-                            marker.showInfoWindow();
-                            mCurrentMarkerSelected = marker;
-                        }
-                    }
-                }
-                return true;
-            }
-
-        });
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
             @Override
             public void onInfoWindowLongClick(Marker marker) {
                 try{
-                    long id = ((GalleryEntry)marker.getTag()).getEntryId();
+                    long id = mCurrentSelection.getEntryId();
                     Intent intent = new Intent(getActivity(), DisplayEntryActivity.class);
                     intent.putExtra("ID", id);
                     startActivity(intent);
@@ -318,6 +306,25 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mPreviousLocation, mZoomLevel));
                 mCurrentSelection = null;
                 mCurrentMarkerSelected = null;
+            }
+        });
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                mCustomLocationMarker = mMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
+                        .snippet(latLng.toString()));
+            }
+        });
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                if (mCustomLocationMarker != null) {
+                    mCustomLocationMarker.remove();
+                    mCustomLocationMarker = null;
+                }
             }
         });
         Log.d("debug", "Map is ready");
@@ -363,18 +370,13 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 briefMarkerInfo.setLongitude(lng);
                                 briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
                                 briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
+                                mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
                                 MarkerOptions markerOptions = new MarkerOptions()
                                         .position(new LatLng(lat, lng))
-                                        .alpha((float)0.77);
-                                if (iconBitmap != null) {
-                                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(iconBitmap));
-                                }
-                                else markerOptions.icon(BitmapDescriptorFactory
-                                        .defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                                Marker marker = mMap.addMarker(markerOptions);
-                                marker.setTag(briefMarkerInfo);
-                                mAllGalleryEntries.add(marker);
+                                        .visible(false);
+                                mAllMarkers.add(mMap.addMarker(markerOptions));
                             }
+                            mClusterManager.cluster();
                         }
                     }
                     @Override
@@ -386,109 +388,9 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         loadGalleryEntryFromCloud.run();
 
         // BoomButton setup
-        mBoomButton = getActivity().findViewById(R.id.boombutton_main);
-        mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-        mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-        mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
-        mBoomButton.setBoomEnum(BoomEnum.RANDOM);
-        for (int i=0; i<mBoomButton.getPiecePlaceEnum().pieceNumber(); i++){
-            switch (i) {
-                case 0:
-                    TextOutsideCircleButton.Builder builder0 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_current_location)
-                            .normalText("Me")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mCurrentMarker != null){
-                                        mMap.animateCamera(CameraUpdateFactory
-                                                .newLatLngZoom(mCurrentMarker.getPosition(), 16));
-                                    }
-                                    else Toast.makeText(getActivity()
-                                            , "Current Location Not Available", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                    mBoomButton.addBuilder(builder0);
-                    break;
-                case 1:
-                    TextOutsideCircleButton.Builder builder1 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_random)
-                            .normalText("Random")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mAllGalleryEntries != null && mAllGalleryEntries.size() == 0){
-                                        if (mCurrentMarkerSelected != null){
-                                            mCurrentMarkerSelected.hideInfoWindow();
-                                        }
-                                        int markerIndex = (int)(Math.random() * (mAllGalleryEntries.size()));
-                                        Marker marker = mAllGalleryEntries.get(markerIndex);
-                                        LatLng mLoc = marker.getPosition();
-                                        double lat = mLoc.latitude + 0.0065;
-                                        LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
-                                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
-                                        // TODO: Info Window Does Not Shown Every Time
-                                        marker.showInfoWindow();
-                                        Log.d("debug", ""+marker.isInfoWindowShown());
-                                    }
-                                    else Toast.makeText(getActivity()
-                                            , "No Posts Are Available", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                    mBoomButton.addBuilder(builder1);
-                    break;
-                case 2:
-                    TextOutsideCircleButton.Builder builder2 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add)
-                            .normalText("New")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mCurrentMarker == null) Toast.makeText(getActivity()
-                                        , "Location cannot be determined, Please try again later"
-                                            , Toast.LENGTH_SHORT).show();
-                                    else {
-                                        Intent newEntry = new Intent(getActivity(), EditNewEntryActivity.class);
-                                        newEntry.putExtra("location", mCurrentMarker.getPosition());
-                                        startActivity(newEntry);
-                                    }
-                                }
-                            });
-                    mBoomButton.addBuilder(builder2);
-                    break;
-                case 3:
-                    TextOutsideCircleButton.Builder builder3 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add_from_marker)
-                            .normalText("New From Marker")
-                            .listener(new OnBMClickListener() {
-                                @Override
-                                public void onBoomButtonClick(int index) {
-                                    if (mCustomLocationMarker == null)
-                                        Toast.makeText(mApplicationContext
-                                                , "Please long click on the map to place a marker first"
-                                                , Toast.LENGTH_SHORT).show();
-                                    else {
-                                        Intent newEntry = new Intent(getActivity(), EditNewEntryActivity.class);
-                                        newEntry.putExtra("location", mCustomLocationMarker.getPosition());
-                                        startActivity(newEntry);
-                                    }
-                                }
-                            });
-                    mBoomButton.addBuilder(builder3);
-                    break;
-                case 4:
-                    TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
-                            .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_add)
-                            .normalText("Option 5");
-                    mBoomButton.addBuilder(builder4);
-                    break;
-            }
-        }
+        BoomButtonDisplayMain boomDisplay = new BoomButtonDisplayMain(mBoomButton);
+        boomDisplay.mapFragmentDisplay(getActivity(), mMap, mCurrentMarker, mAllMarkers
+                , mCurrentMarkerSelected, mCustomLocationMarker);
     }
 
     // For version above 23, check permission before initializing location services.
@@ -586,6 +488,22 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                         .position(currLoc)
                                         .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
             }
+        }
+    }
+
+    class MarkerRenderer extends DefaultClusterRenderer<ClusteredMarker>{
+        private final Context mContext;
+        public MarkerRenderer(Context context, GoogleMap map) {
+            super(context, map, mClusterManager);
+            mContext = context;
+        }
+        @Override
+        protected void onBeforeClusterItemRendered(ClusteredMarker item,
+                                                   MarkerOptions markerOptions) {
+            final BitmapDescriptor markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
+            markerOptions
+                    .icon(markerDescriptor)
+                    .alpha((float)0.77);
         }
     }
 

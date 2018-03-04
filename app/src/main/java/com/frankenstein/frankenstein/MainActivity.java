@@ -6,6 +6,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -38,6 +42,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.nightonke.boommenu.Animation.BoomEnum;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextInsideCircleButton;
@@ -50,9 +55,14 @@ import org.w3c.dom.Text;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
+
+import static android.content.Context.SENSOR_SERVICE;
+import static java.lang.Math.abs;
+import static java.lang.Math.toDegrees;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
 
     private String TAG = "TESTING123";
     private FirebaseUser mFirebaseUser;
@@ -63,20 +73,29 @@ public class MainActivity extends AppCompatActivity
     private String profileUri;
     private ImageView mImageViewProfilePic;
     private TextView mTextViewNickname;
+    private int mode = 0;
+    private int switchAngle = 20;
+    private BoomMenuButton mMapButton;
+    private BoomMenuButton mARButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mMapButton = findViewById(R.id.boombutton_mainMap);
+        mARButton = findViewById(R.id.boombutton_mainAR);
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
         //Log.d("debug", "username: " + username);
+        Global.mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        Global.accelerometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Global.magnetometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        ARFragment arFragment= new ARFragment();
+        Global.arFragment= new ARFragment();
         // Map Fragment
-        com.frankenstein.frankenstein.MapFragment mapFragment = new com.frankenstein.frankenstein.MapFragment();
-        getFragmentManager().beginTransaction().replace(R.id.main_frame, arFragment).commit();
+        Global.mapFragment = new com.frankenstein.frankenstein.MapFragment();
+        getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.arFragment).commit();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -251,5 +270,58 @@ public class MainActivity extends AppCompatActivity
     public void onRestoreInstanceState(Bundle savedInstanceState){
         itemcount = savedInstanceState.getLong("itemcount");
     }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
+        Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        Global.mSensorManager.unregisterListener(this);
+    }
+
+    float[] mGravity;
+    float[] mGeomagnetic;
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                Log.d("s1", ""+toDegrees(orientation[1]));
+                if(abs(toDegrees(orientation[1])) < switchAngle && mode == 0){
+                    Log.d("s1", "Going to map");
+                    getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.mapFragment).commit();
+                    mode = 1;
+                    mARButton.setVisibility(View.GONE);
+                    mMapButton.setVisibility(View.VISIBLE);
+                } else if(abs(toDegrees(orientation[1])) >= switchAngle && mode == 1){
+                    Log.d("s1", "Going to ar");
+                    getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                    Global.arFragment.onSensorChanged(orientation);
+                    mode = 0;
+                    mARButton.setVisibility(View.VISIBLE);
+                    mMapButton.setVisibility(View.GONE);
+                } else if (abs(toDegrees(orientation[1])) >= switchAngle){
+                    Log.d("s1", "updating ar");
+                    Global.arFragment.onSensorChanged(orientation);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {}
 
 }
