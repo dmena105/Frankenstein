@@ -27,6 +27,10 @@ import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.nightonke.boommenu.ButtonEnum;
 import com.nightonke.boommenu.Piece.PiecePlaceEnum;
+import com.transitionseverywhere.ChangeBounds;
+import com.transitionseverywhere.ChangeImageTransform;
+import com.transitionseverywhere.TransitionManager;
+import com.transitionseverywhere.TransitionSet;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -47,6 +51,7 @@ public class DisplayEntryActivity extends AppCompatActivity {
     private TextView mSummaryText;
     private TextView mTextText;
     private ImageView mImageViewProfile;
+    private boolean expanded = false;
     private final Context mContext = this;
 
     @Override

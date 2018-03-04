@@ -15,16 +15,27 @@ public class profileEntry {
     @PrimaryKey(autoGenerate = true)
     private long id;
     @ColumnInfo(name = "nickName")
-    private String mNickname;  // Manual, GPS or automatic
+    private String Nickname;  // Manual, GPS or automatic
     @ColumnInfo(name = "photo")
-    private String mPhoto;   // Running, cycling etc
+    private String Photo;   // Running, cycling etc
 
     public long getId() { return id; }
-    public String getmNickname() { return mNickname; }
-    public String getmPhoto() { return mPhoto; }
 
     public void setId(Long id) { this.id = id; }
-    public void setmNickname(String nickname) { this.mNickname = nickname;}
-    public void setmPhoto(String photo) { this.mPhoto = photo;}
 
+    public String getNickname() {
+        return Nickname;
+    }
+
+    public void setNickname(String mNickname) {
+        this.Nickname = mNickname;
+    }
+
+    public String getPhoto() {
+        return Photo;
+    }
+
+    public void setPhoto(String mPhoto) {
+        this.Photo = mPhoto;
+    }
 }

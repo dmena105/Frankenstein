@@ -57,7 +57,7 @@
         android:layout_height="300dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp" />
+        android:layout_marginTop="5dp"/>
 
     <TextView
         android:id="@+id/textView_displayEntry_summary"
@@ -66,12 +66,13 @@
         android:layout_marginTop="15dp"
         android:layout_below="@+id/layout_displayEntry_user"
         android:layout_centerHorizontal="true"
+        android:textAlignment="center"
         android:textColor="#ffffff" />
 
     <ScrollView
         android:id="@+id/scrollView2"
         android:layout_width="300dp"
-        android:layout_height="wrap_content"
+        android:layout_height="150dp"
         android:layout_below="@+id/textView_displayEntry_summary"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="25dp">
@@ -89,7 +90,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/imageView_displayEntry"
         android:layout_marginStart="225dp"
-        android:layout_marginTop="2dp"
         android:textColor="#ffffff" />
 
     <LinearLayout
