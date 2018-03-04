@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity
                             Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
                             // Bitmap to Base64 String
                             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 25, byteArrayOutputStream);
                             byte[] byteArray = byteArrayOutputStream .toByteArray();
                             String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
                             // Save Base64 to Firebase

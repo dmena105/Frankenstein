@@ -291,7 +291,7 @@ public class UserProfileActivity extends AppCompatActivity {
                                     InputStream image_stream = getContentResolver().openInputStream(mImageSource);
                                     Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
                                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                                    bitmap.compress(Bitmap.CompressFormat.PNG, 50, byteArrayOutputStream);
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 25, byteArrayOutputStream);
                                     byte[] byteArray = byteArrayOutputStream .toByteArray();
                                     String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
                                     profile.child(key).child("profilePicture").getRef().setValue(encodedImage);

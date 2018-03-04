@@ -137,8 +137,8 @@ public class ARFragment extends android.app.Fragment {
         FrameLayout frameLayout = view.findViewById(R.id.frame);
         frameLayout.addView(mCustomDrawableView);
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainAR);
-        BoomButtonDisplayMain displayMain = new BoomButtonDisplayMain(mBoomButton);
-        displayMain.arFragmentDisplay(getActivity());
+        BoomButtonDisplayMain displayMain = new BoomButtonDisplayMain(mBoomButton, getActivity());
+        displayMain.arFragmentDisplay();
         return view;
     }
 

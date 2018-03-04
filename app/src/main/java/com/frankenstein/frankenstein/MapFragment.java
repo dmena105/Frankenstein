@@ -72,7 +72,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
     private Marker mCurrentMarker = null;
-    private GalleryEntry mCurrentSelection;
+    public static GalleryEntry mCurrentSelection;
     private float mZoomLevel;
     private LatLng mPreviousLocation;
     private ImageView mImageViewDialog;
@@ -83,11 +83,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Marker mCustomLocationMarker;
     private ClusterManager<ClusteredMarker> mClusterManager;
     private ArrayList<Marker> mAllMarkers;
-    /*private long savedMarkerId;
-    private boolean savedMarkerIsSelected;
-    private boolean savedPreviousLocationExists;
-    private CameraUpdate savedCameraPosition;
-    private double currLat;*/
+    private BoomButtonDisplayMain boomDisplay;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -100,6 +96,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainMap);
+        // BoomButton setup
         setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -113,49 +110,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         return view;
     }
 
-    /*@Override
-    public void onSaveInstanceState(Bundle outState){
-        super.onSaveInstanceState(outState);
-        if (mPreviousLocation != null){
-            outState.putBoolean("mPreviousLocationIsNull", false);
-            outState.putDouble("prevLat", mPreviousLocation.latitude);
-            outState.putDouble("prevLng", mPreviousLocation.longitude);
-            outState.putFloat("prevZoom", mZoomLevel);
-        }
-        else outState.putBoolean("mPreviousLocationIsNull", true);
-        outState.putDouble("currLat", mMap.getCameraPosition().target.latitude);
-        outState.putDouble("currLng", mMap.getCameraPosition().target.longitude);
-        outState.putFloat("currZoom", mMap.getCameraPosition().zoom);
-        Log.d("debug", "currLat saved: " + mMap.getCameraPosition().target.latitude);
-        if (mCurrentSelection != null){
-            outState.putLong("currMarkerId", mCurrentSelection.getEntryId());
-            outState.putBoolean("markerIsSelected", true);
-        }
-        else outState.putBoolean("markerIsSelected", false);
 
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState){
-        super.onActivityCreated(savedInstanceState);
-        try {
-            savedCameraPosition = CameraUpdateFactory.newLatLngZoom
-                                    (new LatLng(savedInstanceState.getDouble("currLat")
-                                    , savedInstanceState.getDouble("currLng"))
-                            , savedInstanceState.getFloat("currZoom"));
-            Log.d("debug", "currLat retrieved: " + savedInstanceState.getDouble("currLat"));
-            if (!savedInstanceState.getBoolean("mPreviousLocationIsNull")) {
-                mPreviousLocation = new LatLng(savedInstanceState.getDouble("prevLat")
-                        , savedInstanceState.getDouble("prevLng"));
-            }
-            if (savedInstanceState.getBoolean("markerIsSelected")) {
-                savedMarkerIsSelected = true;
-                savedMarkerId = savedInstanceState.getLong("currMarkerId");
-            }
-            else savedMarkerIsSelected = false;
-        } catch (NullPointerException e){}
-    }
-*/
     @Override
     public void onResume() {
         super.onResume();
@@ -175,6 +130,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         super.onDestroy();
         mMapView.onDestroy();
         if (TrackingService.isRunning()) mApplicationContext.unbindService(this);
+        mClusterManager = null;
         Log.d("debug", "builder cleared Map");
 
     }
@@ -198,19 +154,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        /*if (savedMarkerIsSelected) {
-            for (Marker marker : mAllGalleryEntries) {
-                if (((GalleryEntry) marker.getTag()).getEntryId() == savedMarkerId) {
-                    marker.showInfoWindow();
-                    break;
-                }
-            }
-        }
-        Log.d("debug", "currLat used: " + currLat);
-        if (savedCameraPosition != null) {
-            mMap.animateCamera(savedCameraPosition);
-            Log.d("debug", "currLat used: " + savedCameraPosition.toString());
-        }*/
         mClusterManager = new ClusterManager<>(getActivity(), mMap);
         mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<ClusteredMarker>() {
             @Override
@@ -226,6 +169,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
                             marker.getPosition().longitude == clusteredMarker.getPosition().longitude) {
                         mCurrentMarkerSelected = marker;
+                        if (boomDisplay != null) boomDisplay.setCurrentMarkerSelected(mCurrentMarkerSelected);
                         marker.showInfoWindow();
                         break;
                     }
@@ -288,9 +232,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             @Override
             public void onInfoWindowLongClick(Marker marker) {
                 try{
-                    long id = mCurrentSelection.getEntryId();
                     Intent intent = new Intent(getActivity(), DisplayEntryActivity.class);
-                    intent.putExtra("ID", id);
                     startActivity(intent);
 
                 } catch (NullPointerException e){
@@ -316,6 +258,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                         .position(latLng)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
                         .snippet(latLng.toString()));
+                if (boomDisplay != null) boomDisplay.setCustomLocationMarker(mCustomLocationMarker);
             }
         });
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -324,73 +267,16 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 if (mCustomLocationMarker != null) {
                     mCustomLocationMarker.remove();
                     mCustomLocationMarker = null;
+                    if (boomDisplay != null) boomDisplay.setCustomLocationMarker(null);
                 }
             }
         });
+        boomDisplay = new BoomButtonDisplayMain(mBoomButton, getActivity()
+                , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker);
+        boomDisplay.mapFragmentDisplay();
         Log.d("debug", "Map is ready");
         checkPermissions();
-        Runnable loadFromCloud = new Runnable() {
-            @Override
-            public void run() {
-                DatabaseReference refUtil = MainActivity.databaseReference.child("users")
-                        .child(MainActivity.username);
-                Log.d("debug", refUtil.toString());
-                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        String imageEncodedString = null;
-                        Bitmap iconBitmap = null;
-                        if (dataSnapshot.child("profile").hasChildren()){
-                            for (DataSnapshot dssProfile: dataSnapshot.child("profile").getChildren()){
-                                imageEncodedString = dssProfile.child("profilePicture").getValue(String.class);
-                                if (imageEncodedString != null){
-                                    try {
-                                        /*Uri image_uri = Uri.parse(imageEncodedString);
-                                        InputStream image_stream = getActivity().getContentResolver().openInputStream(image_uri);
-                                        Bitmap bitmap= BitmapFactory.decodeStream(image_stream);*/
-                                        // Base64 into byte arrays
-                                        byte[] decodedString = Base64.decode(imageEncodedString, Base64.DEFAULT);
-                                        // byte array into bitmap
-                                        Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-                                        // scale bitmap
-                                        iconBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, false);
-                                    } catch (Exception e){
-                                        Log.d("debug", "profile picture not found");
-                                    }
-                                }
-                            }
-                        }
-                        if (dataSnapshot.child("items").hasChildren()){
-                            for (DataSnapshot dss: dataSnapshot.child("items").getChildren()){
-                                double lat = dss.child("latitude").getValue(Double.class);
-                                double lng = dss.child("longitude").getValue(Double.class);
-                                GalleryEntry briefMarkerInfo = new GalleryEntry();
-                                briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
-                                briefMarkerInfo.setLatitude(lat);
-                                briefMarkerInfo.setLongitude(lng);
-                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
-                                briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
-                                mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
-                                MarkerOptions markerOptions = new MarkerOptions()
-                                        .position(new LatLng(lat, lng))
-                                        .visible(false);
-                                mAllMarkers.add(mMap.addMarker(markerOptions));
-                            }
-                            mClusterManager.cluster();
-                        }
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {}
-                });
-            }
-        };
-        Thread loadGalleryEntryFromCloud = new Thread(loadFromCloud);
-        loadGalleryEntryFromCloud.run();
-
-        // BoomButton setup
-        BoomButtonDisplayMain boomDisplay = new BoomButtonDisplayMain(mBoomButton);
-        boomDisplay.mapFragmentDisplay(getActivity(), mMap, mCurrentMarker, mAllMarkers
-                , mCurrentMarkerSelected, mCustomLocationMarker);
+        new LoadFromCloud().start();
     }
 
     // For version above 23, check permission before initializing location services.
@@ -470,6 +356,71 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         trackingServiceMessenger = null;
     }
 
+    public class LoadFromCloud extends Thread{
+        Handler handler = new Handler();
+        Runnable loadFromCloud = new Runnable() {
+            @Override
+            public void run() {
+                DatabaseReference refUtil = MainActivity.databaseReference.child("users")
+                        .child(MainActivity.username);
+                Log.d("debug", refUtil.toString());
+                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        String imageEncodedString = null;
+                        Bitmap iconBitmap = null;
+                        if (dataSnapshot.child("profile").hasChildren()){
+                            for (DataSnapshot dssProfile: dataSnapshot.child("profile").getChildren()){
+                                imageEncodedString = dssProfile.child("profilePicture").getValue(String.class);
+                                if (imageEncodedString != null){
+                                    try {
+                                        /*Uri image_uri = Uri.parse(imageEncodedString);
+                                        InputStream image_stream = getActivity().getContentResolver().openInputStream(image_uri);
+                                        Bitmap bitmap= BitmapFactory.decodeStream(image_stream);*/
+                                        // Base64 into byte arrays
+                                        byte[] decodedString = Base64.decode(imageEncodedString, Base64.DEFAULT);
+                                        // byte array into bitmap
+                                        Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                        // scale bitmap
+                                        iconBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, false);
+                                    } catch (Exception e){
+                                        Log.d("debug", "profile picture not found");
+                                    }
+                                }
+                            }
+                        }
+                        if (dataSnapshot.child("items").hasChildren()){
+                            for (DataSnapshot dss: dataSnapshot.child("items").getChildren()){
+                                double lat = dss.child("latitude").getValue(Double.class);
+                                double lng = dss.child("longitude").getValue(Double.class);
+                                GalleryEntry briefMarkerInfo = new GalleryEntry();
+                                briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
+                                briefMarkerInfo.setLatitude(lat);
+                                briefMarkerInfo.setLongitude(lng);
+                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
+                                briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
+                                mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
+                                MarkerOptions markerOptions = new MarkerOptions()
+                                        .position(new LatLng(lat, lng))
+                                        .visible(false);
+                                mAllMarkers.add(mMap.addMarker(markerOptions));
+                            }
+                            if (boomDisplay != null) boomDisplay.setAllMarkers(mAllMarkers);
+                            mClusterManager.cluster();
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
+            }
+        };
+
+        @Override
+        public void run(){
+            handler.post(loadFromCloud);
+        }
+    }
+
     class MapFragmentMessageHandler extends Handler{
         @Override
         public void handleMessage(Message msg){
@@ -487,6 +438,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                         .snippet("Current Location")
                                         .position(currLoc)
                                         .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
+                    if (boomDisplay != null) boomDisplay.setCurrentMarker(mCurrentMarker);
             }
         }
     }
