@@ -1,19 +1,22 @@
 package com.frankenstein.frankenstein;
 
-import android.app.Fragment;
+import android.annotation.TargetApi;
+import android.app.Application;
+import android.app.LoaderManager;
+import android.arch.persistence.room.Room;
+import android.content.AsyncTaskLoader;
+import android.content.Context;
 import android.content.Intent;
+import android.content.Loader;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -28,10 +31,6 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.*;
-import com.google.android.gms.maps.MapFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -40,29 +39,18 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.nightonke.boommenu.Animation.BoomEnum;
-import com.nightonke.boommenu.BoomButtons.BoomButton;
-import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
-import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
-import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
-import com.nightonke.boommenu.BoomButtons.TextInsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.nightonke.boommenu.ButtonEnum;
-import com.nightonke.boommenu.Piece.PiecePlaceEnum;
-
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.List;
 
-import static android.content.Context.SENSOR_SERVICE;
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
+@TargetApi(23)
+public class MainActivity extends AppCompatActivity implements
+        NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
 
     private String TAG = "TESTING123";
     private FirebaseUser mFirebaseUser;
@@ -78,9 +66,19 @@ public class MainActivity extends AppCompatActivity
     private BoomMenuButton mMapButton;
     private BoomMenuButton mARButton;
 
+
+    //Database Variables
+    private profileEntry entry;
+    private List<profileEntry> values;
+    private static AppDatabase db;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "entries").build();
+
         setContentView(R.layout.activity_main);
         mMapButton = findViewById(R.id.boombutton_mainMap);
         mARButton = findViewById(R.id.boombutton_mainAR);
@@ -122,9 +120,12 @@ public class MainActivity extends AppCompatActivity
         });
         mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
-        // 0 is sign up activity, 1 is sign-in activity
-        int mode = getIntent().getIntExtra("mode", 1);
+        // Get to mode to know who is starting the activity
+        int mode = getIntent().getIntExtra("mode", 2);
+
+        //Coming from Sign Up Page
         if (mode == 0){
+            Log.d(TAG, "Mode: " + mode);
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
             final DatabaseReference refUtil = databaseReference.child("users")
@@ -156,13 +157,18 @@ public class MainActivity extends AppCompatActivity
                 });
                 saveProfilePic.start();
             }
+            //Load the dummy into the Nav View
             else ((ImageView)v.findViewById(R.id.imageView_mainDrawer))
                     .setImageResource(R.drawable.ic_signup_image_placeholder);
         }
-        else {
-            Thread loadProfilePic = new Thread(new Runnable() {
+        //Coming Back from Log in Page
+        else if(mode == 1){
+            Log.d(TAG, "Mode: " + mode);
+
+            Thread loadProfile = new Thread(new Runnable() {
                 @Override
                 public void run() {
+
                     DatabaseReference refUtil = databaseReference.child("users").child(username);
                     refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -170,27 +176,45 @@ public class MainActivity extends AppCompatActivity
                             if (dataSnapshot.child("items").hasChildren())
                                 itemcount = dataSnapshot.child("items").getChildrenCount();
 
-                            if (dataSnapshot.child("profile").hasChildren()){
-                                for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
-                                    nickname = dss.child("username").getValue(String.class);
+                            if (dataSnapshot.child("profile").hasChildren()) {
+                                for (DataSnapshot dss : dataSnapshot.child("profile").getChildren()) {
+                                    String nickname = dss.child("username").getValue(String.class);
                                     String encodedImage = dss.child("profilePicture").getValue(String.class);
                                     if (encodedImage != null) {
                                         byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
-                                        // TODO: Put this into a buffer - SQL username->profile image
                                     }
-                                    else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
-                                    if (nickname != null) mTextViewNickname.setText(nickname);
+                                    // TODO: Put this into a buffer - SQL username->profile image
+
+                                    else
+                                        mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                                    if (nickname != null) {
+                                        mTextViewNickname.setText(nickname);
+                                    }
+                                    //Load Items to the Database
+                                    entry = new profileEntry();
+                                    Log.d(TAG, "PHOTO ENCODED: " + encodedImage);
+                                    entry.setNickname(nickname);
+                                    profileEntry[] params = { entry };
+                                    new dataWriter().execute(params);
                                 }
                             }
                         }
+
                         @Override
-                        public void onCancelled(DatabaseError databaseError) {}
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
                     });
+
                 }
             });
-            loadProfilePic.start();
+            loadProfile.start();
+
+        }
+        //The user was already logged in, Mode == 2
+        else {
+            new dataLoader().execute();
         }
 
         //Listener that allows for the nav view to update when firebase changes somethings
@@ -324,4 +348,41 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {}
 
+
+    public class dataLoader extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            values = db.myDao().loadAllEntries();
+            Log.d(TAG, values.get(0).getNickname());
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
+
+    public static class dataWriter extends AsyncTask<profileEntry, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Void doInBackground(profileEntry ...profileEntries) {
+            profileEntry entry = profileEntries[0];
+            Log.d("TESTING123", entry.getPhoto());
+            db.myDao().insertEntry(entry);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
 }

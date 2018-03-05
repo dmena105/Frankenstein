@@ -13,7 +13,7 @@ import android.util.Log;
  */
 
 @Database(entities = {profileEntry.class}, version = 1, exportSchema = false)
-abstract class AppDatabase extends RoomDatabase {
+public abstract class AppDatabase extends RoomDatabase {
 
     private static AppDatabase INSTANCE;
     public abstract MyDao myDao();

@@ -19,12 +19,15 @@ public class profileEntry {
     @ColumnInfo(name = "photo")
     private String mPhoto;   // Running, cycling etc
 
+    // Getters
     public long getId() { return id; }
-    public String getmNickname() { return mNickname; }
-    public String getmPhoto() { return mPhoto; }
+    public String getNickname() { return mNickname; }
+    public String getPhoto() { return mPhoto; }
 
+    // Setters
     public void setId(Long id) { this.id = id; }
-    public void setmNickname(String nickname) { this.mNickname = nickname;}
-    public void setmPhoto(String photo) { this.mPhoto = photo;}
+    public void setNickname(String nickname) { this.mNickname = nickname;}
+    public void setPhoto(String photo) { this.mPhoto = photo;}
 
 }
+

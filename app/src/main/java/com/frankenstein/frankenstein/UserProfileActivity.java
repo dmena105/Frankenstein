@@ -1,6 +1,7 @@
 package com.frankenstein.frankenstein;
 
 import android.app.AlertDialog;
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,11 +40,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class UserProfileActivity extends AppCompatActivity {
-    private static final String TAG = "USERPROFILE";
+    private static final String TAG = "TESTING123";
 
     private ViewGroup mTransitionGroup;
     private Button mLogOutButton;
@@ -75,6 +77,9 @@ public class UserProfileActivity extends AppCompatActivity {
     private final int SELECT_IMAGE = 1;
     private final int CROP_IMAGE = 2;
     private Uri mImageSource = null;
+
+    //Database
+    List<profileEntry> values;
 
 
     @Override
@@ -183,6 +188,7 @@ public class UserProfileActivity extends AppCompatActivity {
                     mFirebaseAuth.signOut();
                     Intent login_intent = new Intent(mContext, LogInActivity.class);
                     login_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    AppDatabase.destroyInstance();
                     startActivity(login_intent);
                 }
                 else {
