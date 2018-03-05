@@ -264,9 +264,7 @@ public class UserProfileActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         //Listen to for when the user presses the save Button
         if (item.getItemId() == R.id.action_save) {
-
             new SavingTask().execute();
-
             Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
             finish();
         }
