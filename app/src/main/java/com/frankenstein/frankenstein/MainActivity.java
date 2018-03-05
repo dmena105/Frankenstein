@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity
         mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
         // 0 is sign up activity, 1 is sign-in activity, 2 = the user has already logged in
-        int mode = getIntent().getIntExtra("mode", 2);
+        int mode = getIntent().getIntExtra("mode", 1);
         if (mode == 0){
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
