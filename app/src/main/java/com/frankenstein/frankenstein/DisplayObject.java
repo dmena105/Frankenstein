@@ -91,6 +91,7 @@ public class DisplayObject {
         int top = centerY - (int)(scale*spanY/2);
         int bottom = centerY + (int)(scale*spanY/2);
         Rect ret = new Rect(left, top, right, bottom);
+        Log.d("gb3", "Returning"+left+top+right+bottom);
         return ret;
     }
 
