@@ -225,7 +225,7 @@ public class ARFragment extends android.app.Fragment {
         int width = displayMetrics.widthPixels;
 
         LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View markerView = inflater.inflate(R.layout.marker, (ViewGroup) getActivity().findViewById(R.id.empty_frame).getParent());
+        final View markerView = inflater.inflate(R.layout.marker, (ViewGroup) getActivity().findViewById(R.id.drawer_layout).getParent());
         final FrameLayout markerLayout = markerView.findViewById(R.id.marker);
 
         if (markerLayout == null) Log.d("MyApplication", "Layout not found!");

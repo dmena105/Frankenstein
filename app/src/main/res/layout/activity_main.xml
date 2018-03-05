@@ -22,10 +22,6 @@
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/activity_main_drawer" />
 
-    <FrameLayout
-        android:id="@+id/empty_frame"
-        android:layout_width="1dp"
-        android:layout_height="1dp">
     </FrameLayout>
 
 </android.support.v4.widget.DrawerLayout>
