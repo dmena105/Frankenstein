@@ -65,14 +65,10 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.TreeMap;
 
-public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
-        ServiceConnection{
-    private GoogleMap mMap;
+public class MapFragment extends android.app.Fragment implements OnMapReadyCallback{
+    public static GoogleMap mMap;
     private MapView mMapView;
-    private Messenger mapFragmentMessenger;
-    private Messenger trackingServiceMessenger;
-    private Application mApplicationContext;
-    private Marker mCurrentMarker = null;
+    public static Marker mCurrentMarker = null;
     public static GalleryEntry mCurrentSelection;
     private float mZoomLevel;
     private LatLng mPreviousLocation;
@@ -84,13 +80,14 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Marker mCustomLocationMarker;
     private ClusterManager<ClusteredMarker> mClusterManager;
     private ArrayList<Marker> mAllMarkers;
-    private BoomButtonDisplayMain boomDisplay;
+    public static BoomButtonDisplayMain boomDisplay;
     private TreeMap<String, String> mPictureCache;
+    public static boolean mapIsReady = false;
+    private final Context mContext = getActivity();
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        mApplicationContext = (Application)getActivity().getApplicationContext();
         mAllMarkers = new ArrayList<>();
         mPictureCache = new TreeMap<>();
     }
@@ -131,7 +128,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onDestroy() {
         super.onDestroy();
         mMapView.onDestroy();
-        if (TrackingService.isRunning()) mApplicationContext.unbindService(this);
         mClusterManager = null;
         Log.d("debug", "builder cleared Map");
 
@@ -156,6 +152,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mapIsReady = true;
         mClusterManager = new ClusterManager<>(getActivity(), mMap);
         mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<ClusteredMarker>() {
             @Override
@@ -260,7 +257,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     startActivity(intent);
 
                 } catch (NullPointerException e){
-                    Toast.makeText(mApplicationContext, "An Error Occured. Please Try Again Later"
+                    Toast.makeText(mContext, "An Error Occured. Please Try Again Later"
                             , Toast.LENGTH_SHORT).show();
                 }
 
@@ -299,86 +296,24 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker);
         boomDisplay.mapFragmentDisplay();
         Log.d("debug", "Map is ready");
-        checkPermissions();
+        LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        String provider = locationManager.getBestProvider(criteria, true);
+        try {       // Display the last known location using marker
+            Location lastLoc = locationManager.getLastKnownLocation(provider);
+            if (lastLoc != null) {
+                Log.d("debug", "here");
+                LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
+            }
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
         new LoadFromCloud().start();
     }
 
-    // For version above 23, check permission before initializing location services.
-    private void checkPermissions() {
-        if(Build.VERSION.SDK_INT < 23)
-            return;
-        if (getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-        else {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            String provider = locationManager.getBestProvider(criteria, true);
-            try {       // Display the last known location using marker
-                Location lastLoc = locationManager.getLastKnownLocation(provider);
-                if (lastLoc != null) {
-                    Log.d("debug", "here");
-                    LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
-                }
-                Intent trackIntent = new Intent(getActivity(), TrackingService.class);
-                mApplicationContext.startService(trackIntent);
-                mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    // Callback method from checkPermission.
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            String provider = locationManager.getBestProvider(criteria, true);
-            try {       // Display the last known location using marker
-                Location lastLoc = locationManager.getLastKnownLocation(provider);
-                if (lastLoc != null) {
-                    Log.d("debug", "here");
-                    LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
-                    //mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
-                    //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
-                }
-                Intent trackIntent = new Intent(getActivity(), TrackingService.class);
-                mApplicationContext.startService(trackIntent);
-                mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION))
-                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                else {} // Enter this chunk if permission is asked before
-            }
-        }
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service){
-        mapFragmentMessenger = new Messenger(new MapFragmentMessageHandler());
-        trackingServiceMessenger = new Messenger(service);
-        try {
-            Message msg = Message.obtain(null, TrackingService.ESTABLISH_PORT);
-            msg.replyTo = mapFragmentMessenger;
-            trackingServiceMessenger.send(msg);
-        } catch (RemoteException e){
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name){
-        trackingServiceMessenger = null;
-    }
 
     private void displayMarker(ClusteredMarker clusteredMarker){
         for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
@@ -458,28 +393,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         }
     }
 
-    class MapFragmentMessageHandler extends Handler{
-        @Override
-        public void handleMessage(Message msg){
-            switch (msg.what){
-                case TrackingService.UPDATE_LOCATION:
-                    Bundle bundle = msg.getData();
-                    String[] locInfo = bundle.getString(TrackingService.LOCATION_KEY).split(" ");
-                    LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
-                            Double.parseDouble(locInfo[1]));
-                    if (mCurrentMarker != null) {
-                        mCurrentMarker.remove();
-                    }
-                    // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
-                    mCurrentMarker = mMap.addMarker(new MarkerOptions()
-                                        .snippet("Current Location")
-                                        .position(currLoc)
-                                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
-                    if (boomDisplay != null) boomDisplay.setCurrentMarker(mCurrentMarker);
-            }
-        }
-    }
-
     class MarkerRenderer extends DefaultClusterRenderer<ClusteredMarker>{
         private final Context mContext;
         public MarkerRenderer(Context context, GoogleMap map) {
@@ -495,5 +408,4 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     .alpha((float)0.77);
         }
     }
-
 }
