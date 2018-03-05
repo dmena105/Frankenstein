@@ -20,6 +20,7 @@ import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -70,6 +71,7 @@ public class ARFragment extends android.app.Fragment {
 
 
     public class CustomDrawableView extends View {
+        Rect bounds;
         Paint paint = new Paint();
         Boolean rotating = false;
         //Testing..
@@ -97,10 +99,12 @@ public class ARFragment extends android.app.Fragment {
             if (azimuth != null) {
                 cAzimuth = Global.angleDiff(azimuth,cAzimuth, 60);
                 cPitch = Global.angleDiff(pitch,cPitch, 20);
-                if(abs(roll-cRoll)>3.5){
+                if(abs(roll-cRoll)>5){
                     rotating = true;
                 }
                 if(rotating){
+                    if(abs(Global.angleDist(roll,90f)) < 5)
+                        cRoll = Global.angleDiff(90f, cRoll, 5);
                     cRoll = Global.angleDiff(roll, cRoll, 5);
                     if(abs(roll-cRoll) < 1)
                         rotating = false;
@@ -108,8 +112,13 @@ public class ARFragment extends android.app.Fragment {
                 //Acting weird. Suspended, will ask about removal/readding
                 //canvas.rotate(-(cRoll-90), getWidth()/2, getHeight()/2);
                 Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
-                if(n!=null)
-                    canvas.drawRect(n, paint);
+                Drawable c = North.getImage();
+                if(n!=null && c!=null) {
+                    Log.d("gb3", ""+n.toString()+c.toString());
+                    bounds = n;
+                    c.setBounds(n);
+                    c.draw(canvas);
+                }
                 n = NorthF.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
@@ -118,13 +127,32 @@ public class ARFragment extends android.app.Fragment {
                 }
             }
         }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            int touchx = (int)event.getX();
+            int touchy = (int)event.getY();
+            int i = 0;
+
+            switch(event.getAction()){
+                case MotionEvent.ACTION_DOWN:
+                    if(bounds != null){
+                        Log.d("gb3", ""+touchx+" "+touchy+" "+bounds.toString());
+                        if(bounds.left<touchx && bounds.right>touchx
+                                && bounds.top<touchy && bounds.bottom>touchy){
+                            Toast.makeText(getContext(), "Image selected!", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    break;
+            }
+
+            return true;
+        }
     }
 
     CustomDrawableView mCustomDrawableView;
     private Drawable marker;
     private CameraView cameraView;
-    Sensor accelerometer;
-    Sensor magnetometer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -179,8 +207,8 @@ public class ARFragment extends android.app.Fragment {
     }
     public void onSensorChanged(float[] orientation) {
         Log.d("gb", "Arsensor");
-        if(abs(azimuth-toDegrees(orientation[0])) > 5 ||
-                abs(roll-toDegrees(orientation[2])) > 5){
+        if(abs(azimuth-(toDegrees(orientation[0]))+180) > 6 ||
+                abs(roll-(toDegrees(orientation[2]))+180) > 5){
             azimuth = (float)toDegrees(orientation[0])+180;
             pitch = (float)toDegrees(orientation[1])+180;
             roll = (float)toDegrees(orientation[2])+90;
