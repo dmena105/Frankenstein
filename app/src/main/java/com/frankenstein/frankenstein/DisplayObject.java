@@ -76,6 +76,7 @@ public class DisplayObject {
             return null;
         }
         int centerX = (int)(this.centerX+sin(Math.toRadians(fract))*width);
+        Log.d("gb3", "sin = "+sin(Math.toRadians(fract))+" Angle "+fract);
         float offVertical = Global.angleDist(pitch, this.centerAngles[1]);
         int centerY;
         //Check if your within 90 degrees of the

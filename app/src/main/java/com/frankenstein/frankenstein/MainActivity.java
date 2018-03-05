@@ -369,10 +369,10 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected Void doInBackground(Void... voids) {
-            values = db.myDao().loadAllEntries();
+            values = db.myDao().loadAllEntries();/*
             Log.d(TAG, "Nickname: " + values.get(0).getNickname());
             Log.d(TAG, "Photo1: " + values.get(0).getPhoto1());
-            Log.d(TAG, "Photo2: " + values.get(0).getPhoto2());
+            Log.d(TAG, "Photo2: " + values.get(0).getPhoto2());*/
             return null;
         }
 
