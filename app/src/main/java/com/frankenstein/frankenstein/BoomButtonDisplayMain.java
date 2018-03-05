@@ -165,12 +165,11 @@ public class BoomButtonDisplayMain {
                     case 4:
                         TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
-                                .normalImageRes(R.drawable.ic_boom_button_add)
+                                .normalImageRes(R.drawable.ic_update_map)
                                 .normalText("Update")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-
                                     }
                                 });
                         mBoomButton.addBuilder(builder4);
