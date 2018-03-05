@@ -61,19 +61,4 @@ public class Global extends Application{
             }
         }
     }
-
-    private int unitPreference = 0;
-    private int entryNumber = 1;
-    public int getUnitPreference() {
-        return unitPreference;
-    }
-    public int getEntryNumber(){
-        return entryNumber;
-    }
-    public void setUnitPreference(int unitPreference) {
-        this.unitPreference = unitPreference;
-    }
-    public void setEntryNumber(int entryNumber){
-        this.entryNumber = entryNumber;
-    }
 }

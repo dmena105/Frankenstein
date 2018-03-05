@@ -3,6 +3,7 @@ package com.frankenstein.frankenstein;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
+import android.arch.persistence.room.Room;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
@@ -12,6 +13,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.nfc.Tag;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -47,6 +50,7 @@ import com.nightonke.boommenu.BoomMenuButton;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.List;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
@@ -71,9 +75,19 @@ public class MainActivity extends AppCompatActivity
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
 
+
+    //Database Variables
+    private profileEntry entry;
+    private List<profileEntry> values;
+    private static AppDatabase db;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "entries").build();
+
         setContentView(R.layout.activity_main);
         mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
@@ -116,8 +130,8 @@ public class MainActivity extends AppCompatActivity
         });
         mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
-        // 0 is sign up activity, 1 is sign-in activity
-        int mode = getIntent().getIntExtra("mode", 1);
+        // 0 is sign up activity, 1 is sign-in activity, 2 = the user has already logged in
+        int mode = getIntent().getIntExtra("mode", 2);
         if (mode == 0){
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
@@ -137,7 +151,7 @@ public class MainActivity extends AppCompatActivity
                             Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
                             // Bitmap to Base64 String
                             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                            bitmap.compress(Bitmap.CompressFormat.PNG, 25, byteArrayOutputStream);
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
                             byte[] byteArray = byteArrayOutputStream .toByteArray();
                             String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
                             // Save Base64 to Firebase
@@ -150,11 +164,15 @@ public class MainActivity extends AppCompatActivity
                 });
                 saveProfilePic.start();
             }
+            //Load the dummy into the Nav View
             else ((ImageView)v.findViewById(R.id.imageView_mainDrawer))
                     .setImageResource(R.drawable.ic_signup_image_placeholder);
         }
-        else {
-            Thread loadProfilePic = new Thread(new Runnable() {
+        //Coming Back from Log in Page
+        else if(mode == 1){
+            Log.d(TAG, "Mode: " + mode);
+
+            Thread loadProfile = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     DatabaseReference refUtil = databaseReference.child("users").child(username);
@@ -164,30 +182,49 @@ public class MainActivity extends AppCompatActivity
                             if (dataSnapshot.child("items").hasChildren())
                                 itemcount = dataSnapshot.child("items").getChildrenCount();
 
-                            if (dataSnapshot.child("profile").hasChildren()){
-                                for (DataSnapshot dss: dataSnapshot.child("profile").getChildren()){
-                                    nickname = dss.child("username").getValue(String.class);
+                            if (dataSnapshot.child("profile").hasChildren()) {
+                                for (DataSnapshot dss : dataSnapshot.child("profile").getChildren()) {
+                                    String nickname = dss.child("username").getValue(String.class);
                                     String encodedImage = dss.child("profilePicture").getValue(String.class);
                                     if (encodedImage != null) {
                                         byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
-                                        // TODO: Put this into a buffer - SQL username->profile image
                                     }
-                                    else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
-                                    if (nickname != null) mTextViewNickname.setText(nickname);
+                                    // TODO: Put this into a buffer - SQL username->profile image
+
+                                    else
+                                        mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                                    if (nickname != null) {
+                                        mTextViewNickname.setText(nickname);
+                                    }
+                                    //Load Items to the Database
+                                    entry = new profileEntry();
+                                    entry.setNickname(nickname);
+                                    entry.setPhoto1(encodedImage.substring(0, (encodedImage.length()/100)));
+                                    entry.setPhoto2(encodedImage.substring(encodedImage.length()/2));
+                                    profileEntry[] params = { entry };
+                                    new dataWriter().execute(params);
                                 }
                             }
                         }
+
                         @Override
-                        public void onCancelled(DatabaseError databaseError) {}
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
                     });
+
                 }
             });
+            loadProfile.start();
+
+        }
+        //The user was already logged in, Mode == 2
+        else {
+            new dataLoader().execute();
             Intent trackIntent = new Intent(this, TrackingService.class);
             mApplicationContext.startService(trackIntent);
             mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-            loadProfilePic.start();
         }
 
         //Listener that allows for the nav view to update when firebase changes somethings
@@ -246,10 +283,8 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_gallery) {
             startActivity(new Intent(this, GalleryTimeline.class));
-
-        } else if (id == R.id.nav_personal_profile){
-            startActivity(new Intent(this, UserProfileActivity.class));
         } else if (id == R.id.nav_setting){
+            startActivity(new Intent(this, SettingsActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -325,6 +360,46 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {}
+
+
+    public class dataLoader extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            values = db.myDao().loadAllEntries();
+            Log.d(TAG, "Nickname: " + values.get(0).getNickname());
+            Log.d(TAG, "Photo1: " + values.get(0).getPhoto1());
+            Log.d(TAG, "Photo2: " + values.get(0).getPhoto2());
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
+
+    public static class dataWriter extends AsyncTask<profileEntry, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Void doInBackground(profileEntry ...profileEntries) {
+            profileEntry entry = profileEntries[0];
+            Log.d("TESTING123", "DataWriter: " + entry.getPhoto1() + "HELLLO" + entry.getPhoto2());
+            db.myDao().insertEntry(entry);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service){

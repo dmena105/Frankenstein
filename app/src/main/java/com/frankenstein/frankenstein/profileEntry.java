@@ -15,12 +15,16 @@ public class profileEntry {
     @PrimaryKey(autoGenerate = true)
     private long id;
     @ColumnInfo(name = "nickName")
-    private String Nickname;  // Manual, GPS or automatic
-    @ColumnInfo(name = "photo")
-    private String Photo;   // Running, cycling etc
+    private String Nickname;  // Nickname
+    @ColumnInfo(name = "photo1")
+    private String Photo1;   //
+    @ColumnInfo(name = "photo2")
+    private String Photo2;   // Second Part of Picture
 
+    // Getters
     public long getId() { return id; }
 
+    // Setters
     public void setId(Long id) { this.id = id; }
 
     public String getNickname() {
@@ -31,11 +35,18 @@ public class profileEntry {
         this.Nickname = mNickname;
     }
 
-    public String getPhoto() {
-        return Photo;
+    public String getPhoto1() {
+        return Photo1;
+    }
+    public String getPhoto2() {
+        return Photo2;
     }
 
-    public void setPhoto(String mPhoto) {
-        this.Photo = mPhoto;
+    public void setPhoto1(String mPhoto) {
+        this.Photo1 = mPhoto;
+    }
+
+    public void setPhoto2(String mPhoto) {
+        this.Photo1 = mPhoto;
     }
 }

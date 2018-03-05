@@ -9,11 +9,12 @@ import android.util.Log;
 /**
  * Created by davidmena on 3/4/18.
  *
- * The app Databse
+ * The app Database
+ *
  */
 
 @Database(entities = {profileEntry.class}, version = 1, exportSchema = false)
-abstract class AppDatabase extends RoomDatabase {
+public abstract class AppDatabase extends RoomDatabase {
 
     private static AppDatabase INSTANCE;
     public abstract MyDao myDao();
