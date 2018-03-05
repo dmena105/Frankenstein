@@ -369,6 +369,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
                                 briefMarkerInfo.setLatitude(lat);
                                 briefMarkerInfo.setLongitude(lng);
+                                briefMarkerInfo.setPostTime(dss.child("postTime").getValue(Long.class));
 //                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
                                 briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
                                 mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));

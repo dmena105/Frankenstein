@@ -2,16 +2,19 @@ package com.frankenstein.frankenstein;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,7 +54,10 @@ public class DisplayEntryActivity extends AppCompatActivity {
     private TextView mSummaryText;
     private TextView mTextText;
     private ImageView mImageViewProfile;
-    private boolean expanded = false;
+    private ViewGroup mImageViewContainer;
+    private ViewGroup.LayoutParams imageLayout;
+    private TextView mEnlargeHint;
+    boolean expanded = false;
     private final Context mContext = this;
 
     @Override
@@ -77,7 +83,40 @@ public class DisplayEntryActivity extends AppCompatActivity {
             mTextText = findViewById(R.id.textView_displayEntry_Text);
             mImageViewProfile = findViewById(R.id.imageView_displayEntry_profile);
             mBoomButton = findViewById(R.id.boombutton_display_entry);
+            mImageViewContainer = findViewById(R.id.imageView_displayEntry_transitionContainer);
+            mEnlargeHint = findViewById(R.id.TextView_displayEntry_enlargeHint);
 
+            imageLayout = mImageView.getLayoutParams();
+            mImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    TransitionManager.beginDelayedTransition(mImageViewContainer, new TransitionSet()
+                            .addTransition(new ChangeBounds())
+                            .addTransition(new ChangeImageTransform()));
+                    if (expanded){
+                        ViewGroup.LayoutParams layout = mImageView.getLayoutParams();
+                        //dp * (dpi / 160)
+                        layout.width = (int)convertDpToPixel(177, mContext);
+                        layout.height = (int)convertDpToPixel(300, mContext);
+                        mImageView.setLayoutParams(imageLayout);
+                        //mImageViewContainer.setLayoutParams(pageLayout);
+                        Log.d("debug", "expanded is " + expanded);
+                    }
+                    else {
+                        ViewGroup.LayoutParams params = mImageView.getLayoutParams();
+                        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                        mImageView.setLayoutParams(params);
+                        Log.d("debug", "expanded is " + expanded);
+                    }
+                    mImageView.setScaleType(expanded ? ImageView.ScaleType.FIT_XY : ImageView.ScaleType.CENTER);
+                    expanded = !expanded;
+                }
+            });
+
+            mEnlargeHint.setVisibility(View.GONE);
+            ((ScrollView)findViewById(R.id.scrollView2)).setVisibility(View.GONE);
             mDeleteButton.setVisibility(View.GONE);
             mSummaryText.setText("Loading. Please wait...");
             final DatabaseReference refUtil = MainActivity.databaseReference.child("users").child(MainActivity.username);
@@ -114,6 +153,8 @@ public class DisplayEntryActivity extends AppCompatActivity {
                     mTimePostedText.setText(formatter.format(calendar.getTime()));
                     mSummaryText.setText(entryToDisplay.getSummary());
                     mDeleteButton.setVisibility(View.VISIBLE);
+                    ((ScrollView)findViewById(R.id.scrollView2)).setVisibility(View.VISIBLE);
+                    mEnlargeHint.setVisibility(View.VISIBLE);
                 }
 
                 @Override
@@ -212,5 +253,11 @@ public class DisplayEntryActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+    private float convertDpToPixel(float dp, Context context){
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        float px = dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+        return px;
     }
 }
