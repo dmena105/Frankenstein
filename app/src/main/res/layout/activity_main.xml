@@ -21,10 +21,6 @@
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/activity_main_drawer" />
-    <FrameLayout
-        android:id="@+id/empty_frame"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
 
     </FrameLayout>
 
