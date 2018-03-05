@@ -61,11 +61,14 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                         byte[] imageByteArray = baos.toByteArray();
                         String encodedImage = Base64.encodeToString(imageByteArray, Base64.DEFAULT);
                         String summaryText = mSummaryText.getText().toString();
-                        if (summaryText.length() > 50){
-                            summaryText = summaryText.substring(0, 46) + "...";
+                        if (summaryText.length() > 30){
+                            summaryText = summaryText.substring(0, 26) + "...";
                         }
                         else if (summaryText.equals("")){
-                            summaryText =(mPostText.getText().toString().substring(0, 46) + "...");
+                            if (mPostText.getText().toString().length() > 30)
+                                summaryText =(mPostText.getText().toString().substring(0, 26) + "...");
+                            else
+                                summaryText = mPostText.getText().toString();
                         }
                         DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                                 .child(MainActivity.username).child("items").push();

@@ -86,7 +86,8 @@
         <activity
             android:name=".GalleryTimeline"
             android:label="Gallery Timeline" />
-        <activity android:name=".DisplayEntryActivity" />
+        <activity android:name=".DisplayEntryActivity"
+            android:screenOrientation="portrait"/>
         <activity android:name=".EditNewEntryActivity" />
         <activity android:name=".SaveNewEntryActivity" />
         <activity

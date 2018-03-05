@@ -1,6 +1,7 @@
 package com.frankenstein.frankenstein;
 
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.util.Log;
@@ -17,6 +18,7 @@ import static java.lang.Math.toDegrees;
  */
 
 public class DisplayObject {
+    Drawable image;
     //The azimuth, pitch, and roll of the object
     Float[] centerAngles;
     //The bounds of the object when the phone is held at that position
@@ -33,7 +35,8 @@ public class DisplayObject {
     public DisplayObject(){
     }
 
-    public DisplayObject(Float[] center, int centerX, int centerY, int spanX, int spanY, float lat, float lng, int width, int height){
+    public DisplayObject(Float[] center, int centerX, int centerY, int spanX, int spanY, float lat,
+                         float lng, int width, int height){
         this.centerAngles = center.clone();
         this.centerX = centerX;
         this.centerY = centerY;
@@ -54,6 +57,8 @@ public class DisplayObject {
             return null;
         }
         float scale = 1.0f/mdistance[0];
+        if(scale > 2)
+            scale = 1f;
         //The object is only visible if it's within 90 degrees of the camera
         float fract;
         if(distance < 5) {
@@ -66,12 +71,12 @@ public class DisplayObject {
             goal.setLatitude(lat);
             goal.setLongitude(lng);
             fract = Global.angleDist(azimuth, (float)toDegrees(start.bearingTo(goal))%360)/(float)log(1+scale);
-            Log.d("gb3", "Angle = "+(float)toDegrees(start.bearingTo(goal))%360);
         }
         if(abs(fract) > 90){
             return null;
         }
         int centerX = (int)(this.centerX+sin(Math.toRadians(fract))*width);
+        Log.d("gb3", "sin = "+sin(Math.toRadians(fract))+" Angle "+fract);
         float offVertical = Global.angleDist(pitch, this.centerAngles[1]);
         int centerY;
         //Check if your within 90 degrees of the
@@ -87,6 +92,16 @@ public class DisplayObject {
         int bottom = centerY + (int)(scale*spanY/2);
         Rect ret = new Rect(left, top, right, bottom);
         return ret;
+    }
+
+    public Drawable getImage(){
+        Log.d("gb30", "Image returned");
+        return this.image;
+    }
+
+    public void setImage(Drawable image){
+        Log.d("gb30", "Image set!");
+        this.image = image;
     }
 
     private double meterDistanceBetweenPoints(float lat_a, float lng_a, float lat_b, float lng_b) {
