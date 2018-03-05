@@ -77,13 +77,15 @@ public class ARFragment extends android.app.Fragment {
         //Testing..
         DisplayObject North;
         DisplayObject NorthF;
+        int height;
+        int width;
 
         public CustomDrawableView(Context context) {
             super(context);
             DisplayMetrics displayMetrics = new DisplayMetrics();
             getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            int height = displayMetrics.heightPixels;
-            int width = displayMetrics.widthPixels;
+            height = displayMetrics.heightPixels;
+            width = displayMetrics.widthPixels;
             this.North = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
                     (int)(width*.9), (int)(height*.9), 0f,0f,width,height);
             this.NorthF = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
@@ -110,7 +112,7 @@ public class ARFragment extends android.app.Fragment {
                         rotating = false;
                 }
                 //Acting weird. Suspended, will ask about removal/readding
-                //canvas.rotate(-(cRoll-90), getWidth()/2, getHeight()/2);
+                //canvas.rotate(-(cRoll-90), width/2, height/2);
                 Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 Drawable c = North.getImage();
                 if(n!=null && c!=null) {
@@ -213,7 +215,8 @@ public class ARFragment extends android.app.Fragment {
             pitch = (float)toDegrees(orientation[1])+180;
             roll = (float)toDegrees(orientation[2])+90;
             Log.d("gb", "azimuth: "+azimuth+" pitch: "+pitch+" roll: "+roll);
-            mCustomDrawableView.invalidate();
+            if(mCustomDrawableView != null)
+                mCustomDrawableView.invalidate();
         }
     }
 
