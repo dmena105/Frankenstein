@@ -13,6 +13,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -129,8 +130,8 @@ public class MainActivity extends AppCompatActivity
         });
         mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
-        // 0 is sign up activity, 1 is sign-in activity
-        int mode = getIntent().getIntExtra("mode", 1);
+        // 0 is sign up activity, 1 is sign-in activity, 2 = the user has already logged in
+        int mode = getIntent().getIntExtra("mode", 2);
         if (mode == 0){
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
@@ -199,8 +200,9 @@ public class MainActivity extends AppCompatActivity
                                     }
                                     //Load Items to the Database
                                     entry = new profileEntry();
-                                    Log.d(TAG, "PHOTO ENCODED: " + encodedImage);
                                     entry.setNickname(nickname);
+                                    entry.setPhoto1(encodedImage.substring(0, (encodedImage.length()/100)));
+                                    entry.setPhoto2(encodedImage.substring(encodedImage.length()/2));
                                     profileEntry[] params = { entry };
                                     new dataWriter().execute(params);
                                 }
@@ -281,10 +283,8 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_gallery) {
             startActivity(new Intent(this, GalleryTimeline.class));
-
-        } else if (id == R.id.nav_personal_profile){
-            startActivity(new Intent(this, UserProfileActivity.class));
         } else if (id == R.id.nav_setting){
+            startActivity(new Intent(this, SettingsActivity.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -370,7 +370,9 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Void doInBackground(Void... voids) {
             values = db.myDao().loadAllEntries();
-            Log.d(TAG, values.get(0).getNickname());
+            Log.d(TAG, "Nickname: " + values.get(0).getNickname());
+            Log.d(TAG, "Photo1: " + values.get(0).getPhoto1());
+            Log.d(TAG, "Photo2: " + values.get(0).getPhoto2());
             return null;
         }
 
@@ -388,7 +390,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Void doInBackground(profileEntry ...profileEntries) {
             profileEntry entry = profileEntries[0];
-            Log.d("TESTING123", entry.getPhoto());
+            Log.d("TESTING123", "DataWriter: " + entry.getPhoto1() + "HELLLO" + entry.getPhoto2());
             db.myDao().insertEntry(entry);
             return null;
         }
