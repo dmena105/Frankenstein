@@ -63,6 +63,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.TreeMap;
 
 public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
         ServiceConnection{
@@ -84,13 +85,14 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private ClusterManager<ClusteredMarker> mClusterManager;
     private ArrayList<Marker> mAllMarkers;
     private BoomButtonDisplayMain boomDisplay;
+    private TreeMap<String, String> mPictureCache;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         mApplicationContext = (Application)getActivity().getApplicationContext();
         mAllMarkers = new ArrayList<>();
-
+        mPictureCache = new TreeMap<>();
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -157,7 +159,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mClusterManager = new ClusterManager<>(getActivity(), mMap);
         mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<ClusteredMarker>() {
             @Override
-            public boolean onClusterItemClick(ClusteredMarker clusteredMarker) {
+            public boolean onClusterItemClick(final ClusteredMarker clusteredMarker) {
                 mCurrentSelection = clusteredMarker.getGalleryEntry();
                 mZoomLevel = mMap.getCameraPosition().zoom;
                 mPreviousLocation = mMap.getCameraPosition().target;
@@ -165,14 +167,36 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 double lat = mLoc.latitude + 0.0065;
                 LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
-                for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
-                    if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
-                            marker.getPosition().longitude == clusteredMarker.getPosition().longitude) {
-                        mCurrentMarkerSelected = marker;
-                        if (boomDisplay != null) boomDisplay.setCurrentMarkerSelected(mCurrentMarkerSelected);
-                        marker.showInfoWindow();
-                        break;
-                    }
+                String posKey = clusteredMarker.getPosition().latitude + "_" + clusteredMarker.getPosition().longitude;
+                if (!mPictureCache.containsKey(posKey)) {
+                    final DatabaseReference refUtil = MainActivity.databaseReference.child("users")
+                            .child(MainActivity.username).child("items");
+                    refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChildren()) {
+                                for (DataSnapshot dss : dataSnapshot.getChildren()) {
+                                    if (clusteredMarker.getPosition().latitude == dss.child("latitude").getValue(Double.class)
+                                            && clusteredMarker.getPosition().longitude == dss.child("longitude").getValue(Double.class)) {
+                                        String encodedImage = dss.child("picture").getValue(String.class);
+                                        mCurrentSelection.setPicture(encodedImage);
+                                        String posKey = clusteredMarker.getPosition().latitude + "_" + clusteredMarker.getPosition().longitude;
+                                        mPictureCache.put(posKey, encodedImage);
+                                        break;
+                                    }
+                                }
+                            }
+                            displayMarker(clusteredMarker);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
+                    });
+                }
+                else {
+                    mCurrentSelection.setPicture(mPictureCache.get(posKey));
+                    displayMarker(clusteredMarker);
                 }
                 return true;
             }
@@ -356,6 +380,19 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         trackingServiceMessenger = null;
     }
 
+    private void displayMarker(ClusteredMarker clusteredMarker){
+        for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
+            if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
+                    marker.getPosition().longitude == clusteredMarker.getPosition().longitude) {
+                mCurrentMarkerSelected = marker;
+                if (boomDisplay != null)
+                    boomDisplay.setCurrentMarkerSelected(mCurrentMarkerSelected);
+                marker.showInfoWindow();
+                break;
+            }
+        }
+    }
+
     public class LoadFromCloud extends Thread{
         Handler handler = new Handler();
         Runnable loadFromCloud = new Runnable() {
@@ -397,7 +434,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
                                 briefMarkerInfo.setLatitude(lat);
                                 briefMarkerInfo.setLongitude(lng);
-                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
+//                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
                                 briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
                                 mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
                                 MarkerOptions markerOptions = new MarkerOptions()
