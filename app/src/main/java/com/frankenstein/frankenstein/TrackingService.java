@@ -11,13 +11,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.util.Log;
 
 public class TrackingService extends Service {
     public static final int ESTABLISH_PORT = 0;
     public static final int UPDATE_LOCATION = 1;
     public static final String LOCATION_KEY = "loc_key";
-    private Messenger mapFragmentMessenger = null;
+    private Messenger MainActivityMessenger = null;
     private Messenger trackingServiceMessenger = new Messenger(new TrackingServiceMessageHandler());
     private LocationManager mLocationManager;
     private LocationListener mLocationListener;
@@ -48,7 +47,7 @@ public class TrackingService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent){
-        mapFragmentMessenger = null;
+        MainActivityMessenger = null;
         super.onUnbind(intent);
         return true;
     }
@@ -71,7 +70,7 @@ public class TrackingService extends Service {
         bundle.putString(LOCATION_KEY, info);
         msg.setData(bundle);
         try {
-            if (mapFragmentMessenger != null) mapFragmentMessenger.send(msg);
+            if (MainActivityMessenger != null) MainActivityMessenger.send(msg);
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -121,7 +120,7 @@ public class TrackingService extends Service {
         public void handleMessage(Message msg){
             switch(msg.what){
                 case ESTABLISH_PORT:
-                    mapFragmentMessenger = msg.replyTo;
+                    MainActivityMessenger = msg.replyTo;
                     break;
             }
         }

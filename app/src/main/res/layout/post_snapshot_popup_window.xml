@@ -22,19 +22,6 @@
             app:srcCompat="@color/colorPrimaryDark" />
 
         <TextView
-            android:id="@+id/textView_quit_dialog"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:text="X"
-            android:textColor="#ffffff"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:background="@drawable/button_quit_style"/>
-
-        <TextView
             android:id="@+id/textView_dialogText"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
@@ -71,10 +58,10 @@
             android:layout_centerHorizontal="true"
             android:background="@drawable/button_see_full_post_style"
             android:drawableEnd="@drawable/ic_see_full_post"
-            android:text="See Full Post"
+            android:text="Long Click to See Full Post"
             android:textAlignment="center"
             android:textColor="#ffffff"
-            android:textSize="15sp" />
+            android:textSize="12sp" />
     </RelativeLayout>
 
 

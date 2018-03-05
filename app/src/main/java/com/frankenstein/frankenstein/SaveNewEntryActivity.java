@@ -57,7 +57,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        mImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                        mImage.compress(Bitmap.CompressFormat.JPEG, 50, baos);
                         byte[] imageByteArray = baos.toByteArray();
                         String encodedImage = Base64.encodeToString(imageByteArray, Base64.DEFAULT);
                         String summaryText = mSummaryText.getText().toString();

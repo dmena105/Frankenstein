@@ -1,5 +1,8 @@
 package com.frankenstein.frankenstein;
 
+import android.app.Application;
+import android.content.ComponentName;
+import android.content.Context;
 import android.annotation.TargetApi;
 import android.app.Application;
 import android.app.LoaderManager;
@@ -7,9 +10,12 @@ import android.arch.persistence.room.Room;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.Loader;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -17,6 +23,11 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -28,9 +39,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -39,18 +53,28 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButton;
+import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
+import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
+import com.nightonke.boommenu.BoomButtons.TextInsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.ButtonEnum;
+import com.nightonke.boommenu.Piece.PiecePlaceEnum;
+
+import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.List;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 
-@TargetApi(23)
-public class MainActivity extends AppCompatActivity implements
-        NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
+public class MainActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener, ServiceConnection {
 
     private String TAG = "TESTING123";
     private FirebaseUser mFirebaseUser;
@@ -65,6 +89,9 @@ public class MainActivity extends AppCompatActivity implements
     private int switchAngle = 20;
     private BoomMenuButton mMapButton;
     private BoomMenuButton mARButton;
+    private Messenger mapFragmentMessenger;
+    private Messenger trackingServiceMessenger;
+    private Application mApplicationContext;
 
 
     //Database Variables
@@ -80,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements
         db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "entries").build();
 
         setContentView(R.layout.activity_main);
+        mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
         mARButton = findViewById(R.id.boombutton_mainAR);
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -120,12 +148,9 @@ public class MainActivity extends AppCompatActivity implements
         });
         mImageViewProfilePic = v.findViewById(R.id.imageView_mainDrawer);
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
-        // Get to mode to know who is starting the activity
-        int mode = getIntent().getIntExtra("mode", 2);
-
-        //Coming from Sign Up Page
+        // 0 is sign up activity, 1 is sign-in activity
+        int mode = getIntent().getIntExtra("mode", 1);
         if (mode == 0){
-            Log.d(TAG, "Mode: " + mode);
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
             final DatabaseReference refUtil = databaseReference.child("users")
@@ -168,7 +193,6 @@ public class MainActivity extends AppCompatActivity implements
             Thread loadProfile = new Thread(new Runnable() {
                 @Override
                 public void run() {
-
                     DatabaseReference refUtil = databaseReference.child("users").child(username);
                     refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -215,6 +239,10 @@ public class MainActivity extends AppCompatActivity implements
         //The user was already logged in, Mode == 2
         else {
             new dataLoader().execute();
+            Intent trackIntent = new Intent(this, TrackingService.class);
+            mApplicationContext.startService(trackIntent);
+            mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
+            loadProfilePic.start();
         }
 
         //Listener that allows for the nav view to update when firebase changes somethings
@@ -308,6 +336,11 @@ public class MainActivity extends AppCompatActivity implements
         Global.mSensorManager.unregisterListener(this);
     }
 
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        if (TrackingService.isRunning()) mApplicationContext.unbindService(this);
+    }
     float[] mGravity;
     float[] mGeomagnetic;
     @Override
@@ -385,4 +418,47 @@ public class MainActivity extends AppCompatActivity implements
             super.onPostExecute(aVoid);
         }
     }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service){
+        mapFragmentMessenger = new Messenger(new MainActivityMessageHandler());
+        trackingServiceMessenger = new Messenger(service);
+        try {
+            Message msg = Message.obtain(null, TrackingService.ESTABLISH_PORT);
+            msg.replyTo = mapFragmentMessenger;
+            trackingServiceMessenger.send(msg);
+        } catch (RemoteException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name){
+        trackingServiceMessenger = null;
+    }
+
+    class MainActivityMessageHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg){
+            switch (msg.what){
+                case TrackingService.UPDATE_LOCATION:
+                    if (MapFragment.mapIsReady){
+                        Bundle bundle = msg.getData();
+                        String[] locInfo = bundle.getString(TrackingService.LOCATION_KEY).split(" ");
+                        LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
+                                Double.parseDouble(locInfo[1]));
+                        if (MapFragment.mCurrentMarker != null) {
+                            MapFragment.mCurrentMarker.remove();
+                        }
+                        // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
+                        MapFragment.mCurrentMarker = MapFragment.mMap.addMarker(new MarkerOptions()
+                                .snippet("Current Location")
+                                .position(currLoc)
+                                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
+                        if (MapFragment.boomDisplay != null) MapFragment.boomDisplay.setCurrentMarker(MapFragment.mCurrentMarker);
+                    }
+            }
+        }
+    }
+}
 }

@@ -63,16 +63,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.TreeMap;
 
-public class MapFragment extends android.app.Fragment implements OnMapReadyCallback,
-        ServiceConnection{
-    private GoogleMap mMap;
+public class MapFragment extends android.app.Fragment implements OnMapReadyCallback{
+    public static GoogleMap mMap;
     private MapView mMapView;
-    private Messenger mapFragmentMessenger;
-    private Messenger trackingServiceMessenger;
-    private Application mApplicationContext;
-    private Marker mCurrentMarker = null;
-    private GalleryEntry mCurrentSelection;
+    public static Marker mCurrentMarker = null;
+    public static GalleryEntry mCurrentSelection;
     private float mZoomLevel;
     private LatLng mPreviousLocation;
     private ImageView mImageViewDialog;
@@ -83,23 +80,22 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Marker mCustomLocationMarker;
     private ClusterManager<ClusteredMarker> mClusterManager;
     private ArrayList<Marker> mAllMarkers;
-    /*private long savedMarkerId;
-    private boolean savedMarkerIsSelected;
-    private boolean savedPreviousLocationExists;
-    private CameraUpdate savedCameraPosition;
-    private double currLat;*/
+    public static BoomButtonDisplayMain boomDisplay;
+    private TreeMap<String, String> mPictureCache;
+    public static boolean mapIsReady = false;
+    private final Context mContext = getActivity();
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        mApplicationContext = (Application)getActivity().getApplicationContext();
         mAllMarkers = new ArrayList<>();
-
+        mPictureCache = new TreeMap<>();
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainMap);
+        // BoomButton setup
         setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -113,49 +109,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         return view;
     }
 
-    /*@Override
-    public void onSaveInstanceState(Bundle outState){
-        super.onSaveInstanceState(outState);
-        if (mPreviousLocation != null){
-            outState.putBoolean("mPreviousLocationIsNull", false);
-            outState.putDouble("prevLat", mPreviousLocation.latitude);
-            outState.putDouble("prevLng", mPreviousLocation.longitude);
-            outState.putFloat("prevZoom", mZoomLevel);
-        }
-        else outState.putBoolean("mPreviousLocationIsNull", true);
-        outState.putDouble("currLat", mMap.getCameraPosition().target.latitude);
-        outState.putDouble("currLng", mMap.getCameraPosition().target.longitude);
-        outState.putFloat("currZoom", mMap.getCameraPosition().zoom);
-        Log.d("debug", "currLat saved: " + mMap.getCameraPosition().target.latitude);
-        if (mCurrentSelection != null){
-            outState.putLong("currMarkerId", mCurrentSelection.getEntryId());
-            outState.putBoolean("markerIsSelected", true);
-        }
-        else outState.putBoolean("markerIsSelected", false);
 
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState){
-        super.onActivityCreated(savedInstanceState);
-        try {
-            savedCameraPosition = CameraUpdateFactory.newLatLngZoom
-                                    (new LatLng(savedInstanceState.getDouble("currLat")
-                                    , savedInstanceState.getDouble("currLng"))
-                            , savedInstanceState.getFloat("currZoom"));
-            Log.d("debug", "currLat retrieved: " + savedInstanceState.getDouble("currLat"));
-            if (!savedInstanceState.getBoolean("mPreviousLocationIsNull")) {
-                mPreviousLocation = new LatLng(savedInstanceState.getDouble("prevLat")
-                        , savedInstanceState.getDouble("prevLng"));
-            }
-            if (savedInstanceState.getBoolean("markerIsSelected")) {
-                savedMarkerIsSelected = true;
-                savedMarkerId = savedInstanceState.getLong("currMarkerId");
-            }
-            else savedMarkerIsSelected = false;
-        } catch (NullPointerException e){}
-    }
-*/
     @Override
     public void onResume() {
         super.onResume();
@@ -174,7 +128,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onDestroy() {
         super.onDestroy();
         mMapView.onDestroy();
-        if (TrackingService.isRunning()) mApplicationContext.unbindService(this);
+        mClusterManager = null;
         Log.d("debug", "builder cleared Map");
 
     }
@@ -198,23 +152,11 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        /*if (savedMarkerIsSelected) {
-            for (Marker marker : mAllGalleryEntries) {
-                if (((GalleryEntry) marker.getTag()).getEntryId() == savedMarkerId) {
-                    marker.showInfoWindow();
-                    break;
-                }
-            }
-        }
-        Log.d("debug", "currLat used: " + currLat);
-        if (savedCameraPosition != null) {
-            mMap.animateCamera(savedCameraPosition);
-            Log.d("debug", "currLat used: " + savedCameraPosition.toString());
-        }*/
+        mapIsReady = true;
         mClusterManager = new ClusterManager<>(getActivity(), mMap);
         mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<ClusteredMarker>() {
             @Override
-            public boolean onClusterItemClick(ClusteredMarker clusteredMarker) {
+            public boolean onClusterItemClick(final ClusteredMarker clusteredMarker) {
                 mCurrentSelection = clusteredMarker.getGalleryEntry();
                 mZoomLevel = mMap.getCameraPosition().zoom;
                 mPreviousLocation = mMap.getCameraPosition().target;
@@ -222,13 +164,36 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 double lat = mLoc.latitude + 0.0065;
                 LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
-                for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
-                    if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
-                            marker.getPosition().longitude == clusteredMarker.getPosition().longitude) {
-                        mCurrentMarkerSelected = marker;
-                        marker.showInfoWindow();
-                        break;
-                    }
+                String posKey = clusteredMarker.getPosition().latitude + "_" + clusteredMarker.getPosition().longitude;
+                if (!mPictureCache.containsKey(posKey)) {
+                    final DatabaseReference refUtil = MainActivity.databaseReference.child("users")
+                            .child(MainActivity.username).child("items");
+                    refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChildren()) {
+                                for (DataSnapshot dss : dataSnapshot.getChildren()) {
+                                    if (clusteredMarker.getPosition().latitude == dss.child("latitude").getValue(Double.class)
+                                            && clusteredMarker.getPosition().longitude == dss.child("longitude").getValue(Double.class)) {
+                                        String encodedImage = dss.child("picture").getValue(String.class);
+                                        mCurrentSelection.setPicture(encodedImage);
+                                        String posKey = clusteredMarker.getPosition().latitude + "_" + clusteredMarker.getPosition().longitude;
+                                        mPictureCache.put(posKey, encodedImage);
+                                        break;
+                                    }
+                                }
+                            }
+                            displayMarker(clusteredMarker);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
+                    });
+                }
+                else {
+                    mCurrentSelection.setPicture(mPictureCache.get(posKey));
+                    displayMarker(clusteredMarker);
                 }
                 return true;
             }
@@ -288,13 +253,11 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             @Override
             public void onInfoWindowLongClick(Marker marker) {
                 try{
-                    long id = mCurrentSelection.getEntryId();
                     Intent intent = new Intent(getActivity(), DisplayEntryActivity.class);
-                    intent.putExtra("ID", id);
                     startActivity(intent);
 
                 } catch (NullPointerException e){
-                    Toast.makeText(mApplicationContext, "An Error Occured. Please Try Again Later"
+                    Toast.makeText(mContext, "An Error Occured. Please Try Again Later"
                             , Toast.LENGTH_SHORT).show();
                 }
 
@@ -316,6 +279,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                         .position(latLng)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
                         .snippet(latLng.toString()));
+                if (boomDisplay != null) boomDisplay.setCustomLocationMarker(mCustomLocationMarker);
             }
         });
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -324,11 +288,48 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 if (mCustomLocationMarker != null) {
                     mCustomLocationMarker.remove();
                     mCustomLocationMarker = null;
+                    if (boomDisplay != null) boomDisplay.setCustomLocationMarker(null);
                 }
             }
         });
+        boomDisplay = new BoomButtonDisplayMain(mBoomButton, getActivity()
+                , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker);
+        boomDisplay.mapFragmentDisplay();
         Log.d("debug", "Map is ready");
-        checkPermissions();
+        LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        String provider = locationManager.getBestProvider(criteria, true);
+        try {       // Display the last known location using marker
+            Location lastLoc = locationManager.getLastKnownLocation(provider);
+            if (lastLoc != null) {
+                Log.d("debug", "here");
+                LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
+            }
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+        new LoadFromCloud().start();
+    }
+
+
+    private void displayMarker(ClusteredMarker clusteredMarker){
+        for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
+            if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
+                    marker.getPosition().longitude == clusteredMarker.getPosition().longitude) {
+                mCurrentMarkerSelected = marker;
+                if (boomDisplay != null)
+                    boomDisplay.setCurrentMarkerSelected(mCurrentMarkerSelected);
+                marker.showInfoWindow();
+                break;
+            }
+        }
+    }
+
+    public class LoadFromCloud extends Thread{
+        Handler handler = new Handler();
         Runnable loadFromCloud = new Runnable() {
             @Override
             public void run() {
@@ -368,7 +369,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
                                 briefMarkerInfo.setLatitude(lat);
                                 briefMarkerInfo.setLongitude(lng);
-                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
+//                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
                                 briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
                                 mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
                                 MarkerOptions markerOptions = new MarkerOptions()
@@ -376,6 +377,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                         .visible(false);
                                 mAllMarkers.add(mMap.addMarker(markerOptions));
                             }
+                            if (boomDisplay != null) boomDisplay.setAllMarkers(mAllMarkers);
                             mClusterManager.cluster();
                         }
                     }
@@ -384,110 +386,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 });
             }
         };
-        Thread loadGalleryEntryFromCloud = new Thread(loadFromCloud);
-        loadGalleryEntryFromCloud.run();
 
-        // BoomButton setup
-        BoomButtonDisplayMain boomDisplay = new BoomButtonDisplayMain(mBoomButton);
-        boomDisplay.mapFragmentDisplay(getActivity(), mMap, mCurrentMarker, mAllMarkers
-                , mCurrentMarkerSelected, mCustomLocationMarker);
-    }
-
-    // For version above 23, check permission before initializing location services.
-    private void checkPermissions() {
-        if(Build.VERSION.SDK_INT < 23)
-            return;
-        if (getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-        else {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            String provider = locationManager.getBestProvider(criteria, true);
-            try {       // Display the last known location using marker
-                Location lastLoc = locationManager.getLastKnownLocation(provider);
-                if (lastLoc != null) {
-                    Log.d("debug", "here");
-                    LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
-                }
-                Intent trackIntent = new Intent(getActivity(), TrackingService.class);
-                mApplicationContext.startService(trackIntent);
-                mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    // Callback method from checkPermission.
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            String provider = locationManager.getBestProvider(criteria, true);
-            try {       // Display the last known location using marker
-                Location lastLoc = locationManager.getLastKnownLocation(provider);
-                if (lastLoc != null) {
-                    Log.d("debug", "here");
-                    LatLng lLoc = new LatLng(lastLoc.getLatitude(), lastLoc.getLongitude());
-                    //mMap.moveCamera(CameraUpdateFactory.newLatLng(lLoc));
-                    //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lLoc, 15));
-                }
-                Intent trackIntent = new Intent(getActivity(), TrackingService.class);
-                mApplicationContext.startService(trackIntent);
-                mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION))
-                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-                else {} // Enter this chunk if permission is asked before
-            }
-        }
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service){
-        mapFragmentMessenger = new Messenger(new MapFragmentMessageHandler());
-        trackingServiceMessenger = new Messenger(service);
-        try {
-            Message msg = Message.obtain(null, TrackingService.ESTABLISH_PORT);
-            msg.replyTo = mapFragmentMessenger;
-            trackingServiceMessenger.send(msg);
-        } catch (RemoteException e){
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name){
-        trackingServiceMessenger = null;
-    }
-
-    class MapFragmentMessageHandler extends Handler{
         @Override
-        public void handleMessage(Message msg){
-            switch (msg.what){
-                case TrackingService.UPDATE_LOCATION:
-                    Bundle bundle = msg.getData();
-                    String[] locInfo = bundle.getString(TrackingService.LOCATION_KEY).split(" ");
-                    LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
-                            Double.parseDouble(locInfo[1]));
-                    if (mCurrentMarker != null) {
-                        mCurrentMarker.remove();
-                    }
-                    // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
-                    mCurrentMarker = mMap.addMarker(new MarkerOptions()
-                                        .snippet("Current Location")
-                                        .position(currLoc)
-                                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
-            }
+        public void run(){
+            handler.post(loadFromCloud);
         }
     }
 
@@ -506,5 +408,4 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     .alpha((float)0.77);
         }
     }
-
 }
