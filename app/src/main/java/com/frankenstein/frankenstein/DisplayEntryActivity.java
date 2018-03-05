@@ -110,7 +110,7 @@ public class DisplayEntryActivity extends AppCompatActivity {
                         mImageView.setLayoutParams(params);
                         Log.d("debug", "expanded is " + expanded);
                     }
-                    mImageView.setScaleType(expanded ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER);
+                    mImageView.setScaleType(expanded ? ImageView.ScaleType.FIT_XY : ImageView.ScaleType.CENTER);
                     expanded = !expanded;
                 }
             });
