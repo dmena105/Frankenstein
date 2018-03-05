@@ -1,7 +1,6 @@
 package com.frankenstein.frankenstein;
 
 import android.app.AlertDialog;
-import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
