@@ -2,9 +2,13 @@ package com.frankenstein.frankenstein;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,6 +23,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -102,8 +108,12 @@ public class ARFragment extends android.app.Fragment {
                 //Acting weird. Suspended, will ask about removal/readding
                 //canvas.rotate(-(cRoll-90), getWidth()/2, getHeight()/2);
                 Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
-                if(n!=null)
-                    canvas.drawRect(n, paint);
+                Drawable c = North.getImage();
+                if(n!=null && c!=null) {
+                    Log.d("gb3", ""+n.toString()+c.toString());
+                    c.setBounds(n);
+                    c.draw(canvas);
+                }
                 n = NorthF.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
@@ -115,10 +125,8 @@ public class ARFragment extends android.app.Fragment {
     }
 
     CustomDrawableView mCustomDrawableView;
-    private SensorManager mSensorManager;
+    private Drawable marker;
     private CameraView cameraView;
-    Sensor accelerometer;
-    Sensor magnetometer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -136,6 +144,16 @@ public class ARFragment extends android.app.Fragment {
         mCustomDrawableView = new CustomDrawableView(getContext());
         FrameLayout frameLayout = view.findViewById(R.id.frame);
         frameLayout.addView(mCustomDrawableView);
+
+        Bitmap profile = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+        Bitmap photo = BitmapFactory.decodeResource(getResources(), R.drawable.puppy);
+        String summary = "Cute Puppy";
+        if (marker == null) {
+            createMarkerThread c = new createMarkerThread(profile, photo, summary);
+            c.run();
+        } else {
+            mCustomDrawableView.North.setImage(marker);
+        }
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainAR);
         BoomButtonDisplayMain displayMain = new BoomButtonDisplayMain(mBoomButton, getActivity());
         displayMain.arFragmentDisplay();
@@ -182,5 +200,71 @@ public class ARFragment extends android.app.Fragment {
             old[i] = old[i]+changeRate*(in[i]-old[i]);
         }
         return old;
+    }
+
+    private class createMarkerThread extends Thread{
+        private Bitmap profile;
+        private Bitmap photo;
+        private String summary;
+        public createMarkerThread(Bitmap profile, Bitmap photo,
+                                  String summary){
+            this.profile = profile;
+            this.photo = photo;
+            this.summary = summary;
+        }
+
+        public void run() {
+            createMarker(profile, photo, summary);
+        }
+    }
+
+    public void createMarker(Bitmap profile, Bitmap photo, String summary) {
+        ImageView markerProfile, markerPhoto;
+        TextView markerSummary;
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
+        int width = displayMetrics.widthPixels;
+
+        LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View markerView = inflater.inflate(R.layout.marker, (ViewGroup) getActivity().findViewById(R.id.empty_frame).getParent());
+        final FrameLayout markerLayout = markerView.findViewById(R.id.marker);
+
+        if (markerLayout == null) Log.d("MyApplication", "Layout not found!");
+        else Log.d("MyApplication", "Layout found!");
+
+        //Log.d("MyApplication","Width:" + profile.getWidth() + " Height:" + profile.getHeight());
+        // Get the views from marker layout
+        markerProfile = (ImageView) markerLayout.findViewById(R.id.profile);
+        markerPhoto = (ImageView) markerLayout.findViewById(R.id.photo);
+        markerSummary = (TextView) markerLayout.findViewById(R.id.summary);
+        if (markerProfile != null && markerPhoto != null && markerSummary != null)
+            Log.d("MyApplication", "Marker elements found!");
+
+        //Log.d("MyApplication","Width:" + markerProfile.getWidth() + " Height:" + markerProfile.getHeight());
+        // Set contents accordingly
+        profile = Bitmap.createScaledBitmap(profile, width / 3, height / 4, false);
+        //Log.d("MyApplication", "Width:" + profile.getWidth() + " Height:" + profile.getHeight());
+        markerProfile.setImageBitmap(profile);
+        //Log.d("MyApplication", "Width:" + markerProfile.getWidth() + " Height:" + markerProfile.getHeight());
+        markerPhoto.setImageBitmap(Bitmap.createScaledBitmap(photo, width, height * 3 / 4, false));
+        markerSummary.setText(summary);
+
+        // Get bitmap representation of marker layout
+        markerLayout.post(new Runnable() {
+            public void run() {
+                markerLayout.setDrawingCacheEnabled(true);
+                markerLayout.buildDrawingCache();
+                Bitmap markerBM = markerLayout.getDrawingCache();
+                markerLayout.removeAllViews();
+                marker = new BitmapDrawable(getResources(), markerBM);
+                /*Rect bounds = new Rect(0,0,2000,2000);
+                marker.setBounds(bounds);*/
+                mCustomDrawableView.North.setImage(marker);
+                mCustomDrawableView.invalidate();
+                Log.d("MyApplication","Executed!");
+            }
+        });
+        Log.d("My", "TEsting");
     }
 }
