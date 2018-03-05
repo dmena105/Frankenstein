@@ -3,19 +3,11 @@ package com.frankenstein.frankenstein;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
-import android.annotation.TargetApi;
-import android.app.Application;
-import android.app.LoaderManager;
 import android.arch.persistence.room.Room;
-import android.content.AsyncTaskLoader;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.Loader;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -53,20 +45,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.nightonke.boommenu.Animation.BoomEnum;
-import com.nightonke.boommenu.BoomButtons.BoomButton;
-import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
-import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
-import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
-import com.nightonke.boommenu.BoomButtons.TextInsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
-import com.nightonke.boommenu.ButtonEnum;
-import com.nightonke.boommenu.Piece.PiecePlaceEnum;
-
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -242,7 +223,6 @@ public class MainActivity extends AppCompatActivity
             Intent trackIntent = new Intent(this, TrackingService.class);
             mApplicationContext.startService(trackIntent);
             mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-            loadProfilePic.start();
         }
 
         //Listener that allows for the nav view to update when firebase changes somethings
@@ -460,5 +440,4 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
-}
 }
