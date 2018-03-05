@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -14,24 +15,33 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true" />
 
-    <com.nightonke.boommenu.BoomMenuButton
-        android:id="@+id/boombutton_display_entry"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:id="@+id/imageView_displayEntry_transitionContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true">
-
-    </com.nightonke.boommenu.BoomMenuButton>
-
-    <ImageView
-        android:id="@+id/imageView_displayEntry"
-        android:layout_width="177dp"
-        android:layout_height="300dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp"/>
-
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp">
+        <ImageView
+            android:id="@+id/imageView_displayEntry"
+            android:layout_width="220dp"
+            android:layout_height="300dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"/>
+        <TextView
+            android:id="@+id/TextView_displayEntry_enlargeHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffff"
+            android:text="Click to enlarge"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/imageView_displayEntry"
+            android:textAlignment="center"
+            android:textSize="12sp" />
+    </RelativeLayout>
     <TextView
         android:id="@+id/textView_displayEntry_summary"
         android:layout_width="200dp"
@@ -49,7 +59,7 @@
         android:layout_height="150dp"
         android:layout_below="@+id/textView_displayEntry_summary"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/display_entry_style">
 
         <TextView
@@ -63,7 +73,7 @@
         android:id="@+id/textView_displayEntry_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/imageView_displayEntry"
+        android:layout_below="@+id/imageView_displayEntry_transitionContainer"
         android:layout_marginStart="225dp"
         android:textColor="#ffffff" />
 
@@ -114,4 +124,13 @@
             android:textColor="#ffffff"
             android:textStyle="bold" />
     </LinearLayout>
+    <com.nightonke.boommenu.BoomMenuButton
+        android:id="@+id/boombutton_display_entry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true">
+
+    </com.nightonke.boommenu.BoomMenuButton>
 </RelativeLayout>
