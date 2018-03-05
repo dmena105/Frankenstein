@@ -51,6 +51,7 @@ import com.nightonke.boommenu.BoomMenuButton;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.TreeMap;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
@@ -74,7 +75,6 @@ public class MainActivity extends AppCompatActivity
     private Messenger mapFragmentMessenger;
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
-
 
     //Database Variables
     private profileEntry entry;
@@ -193,7 +193,6 @@ public class MainActivity extends AppCompatActivity
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
                                     }
-                                    // TODO: Put this into a buffer - SQL username->profile image
 
                                     else
                                         mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
@@ -392,7 +391,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Void doInBackground(profileEntry ...profileEntries) {
             profileEntry entry = profileEntries[0];
-            Log.d("TESTING123", "DataWriter: " + entry.getPhoto1() + "HELLLO" + entry.getPhoto2());
+            // Log.d("TESTING123", "DataWriter: " + entry.getPhoto1() + "HELLLO" + entry.getPhoto2());
             db.myDao().insertEntry(entry);
             return null;
         }

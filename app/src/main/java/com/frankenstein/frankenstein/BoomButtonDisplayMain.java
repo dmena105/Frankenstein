@@ -10,6 +10,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -70,13 +71,14 @@ public class BoomButtonDisplayMain {
     }
 
     public void mapFragmentDisplay(){
-        if (mBoomButton.getBuilders() != null) mBoomButton.clearBuilders();
-        mBoomButton.setInFragment(true);
-        mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-        mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-        mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
-        mBoomButton.setBoomEnum(BoomEnum.RANDOM);
+        if (mBoomButton.getBuilders().size() != 0) mBoomButton.clearBuilders();
         try {
+            mBoomButton.setInFragment(true);
+            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
+            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
+            mBoomButton.setBoomEnum(BoomEnum.RANDOM);
+            mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
+            Log.d("debug", ""+ mBoomButton.getButtonEnum().toString());
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
                     case 0:
@@ -182,13 +184,13 @@ public class BoomButtonDisplayMain {
     }
 
     public void arFragmentDisplay(){
-        if (mBoomButton.getBuilders() != null) mBoomButton.clearBuilders();
-        mBoomButton.setInFragment(true);
-        mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-        mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-        mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
-        mBoomButton.setBoomEnum(BoomEnum.RANDOM);
+        if (mBoomButton.getBuilders().size() != 0) mBoomButton.clearBuilders();
         try {
+            mBoomButton.setInFragment(true);
+            mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
+            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
+            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
+            mBoomButton.setBoomEnum(BoomEnum.RANDOM);
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
                     case 0:
