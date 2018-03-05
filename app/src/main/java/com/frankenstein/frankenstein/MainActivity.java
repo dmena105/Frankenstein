@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity
     private String profileUri;
     private ImageView mImageViewProfilePic;
     private TextView mTextViewNickname;
-    private int mode = 0;
+    private int mode = 1;
     private int switchAngle = 20;
     private BoomMenuButton mMapButton;
     private BoomMenuButton mARButton;
@@ -101,9 +101,11 @@ public class MainActivity extends AppCompatActivity
         Global.magnetometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         Global.arFragment= new ARFragment();
+        Global.arFragment.setRetainInstance(true);
         // Map Fragment
         Global.mapFragment = new com.frankenstein.frankenstein.MapFragment();
-        getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.arFragment).commit();
+        Global.mapFragment.setRetainInstance(true);
+        getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.mapFragment).commit();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -339,13 +341,13 @@ public class MainActivity extends AppCompatActivity
                 Log.d("s1", ""+toDegrees(orientation[1]));
                 if(abs(toDegrees(orientation[1])) < switchAngle && mode == 0){
                     Log.d("s1", "Going to map");
-                    getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.mapFragment).commit();
+                    getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
                     mode = 1;
                     mARButton.setVisibility(View.GONE);
                     mMapButton.setVisibility(View.VISIBLE);
                 } else if(abs(toDegrees(orientation[1])) >= switchAngle && mode == 1){
                     Log.d("s1", "Going to ar");
-                    getFragmentManager().beginTransaction().replace(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                    getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
                     Global.arFragment.onSensorChanged(orientation);
                     mode = 0;
                     mARButton.setVisibility(View.VISIBLE);
