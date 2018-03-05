@@ -88,8 +88,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        mAllMarkers = new ArrayList<>();
-        mPictureCache = new TreeMap<>();
+        if(mAllMarkers == null || mPictureCache == null) {
+            mAllMarkers = new ArrayList<>();
+            mPictureCache = new TreeMap<>();
+        }
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
