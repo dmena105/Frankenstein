@@ -108,8 +108,12 @@ public class ARFragment extends android.app.Fragment {
                 //Acting weird. Suspended, will ask about removal/readding
                 //canvas.rotate(-(cRoll-90), getWidth()/2, getHeight()/2);
                 Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
-                if(n!=null)
-                    canvas.drawRect(n, paint);
+                Drawable c = North.getImage();
+                if(n!=null && c!=null) {
+                    Log.d("gb3", ""+n.toString()+c.toString());
+                    c.setBounds(n);
+                    c.draw(canvas);
+                }
                 n = NorthF.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
                 if(n!=null)
                     canvas.drawRect(n, paint);
@@ -123,8 +127,6 @@ public class ARFragment extends android.app.Fragment {
     CustomDrawableView mCustomDrawableView;
     private Drawable marker;
     private CameraView cameraView;
-    Sensor accelerometer;
-    Sensor magnetometer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
