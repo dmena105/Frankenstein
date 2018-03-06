@@ -41,12 +41,14 @@ public class EditNewEntryActivity extends AppCompatActivity{
     private BoomMenuButton mBoomMenu;
     public static Bitmap bitmap;
     public static LatLng location;
+    public static Float azimuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_new_entry);
         location = getIntent().getParcelableExtra("location");
+        azimuth = getIntent().getFloatExtra("azimuth", 0f);
         mCameraView = findViewById(R.id.CameraView_newEntry);
         mBoomMenu = findViewById(R.id.boombutton_newEntry);
         mBoomMenu.setBoomEnum(BoomEnum.RANDOM);

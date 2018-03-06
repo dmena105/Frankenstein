@@ -135,6 +135,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCurrentMarker.getPosition());
+                                            newEntry.putExtra("azimuth", );
                                             context.startActivity(newEntry);
                                         }
                                     }
