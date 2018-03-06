@@ -13,6 +13,15 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name="SettingsTheme" parent="Theme.AppCompat.Light">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/correctTheme</item>
+        <item name="colorPrimaryDark">@color/correctTheme</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorSecondary">#fff</item>
+        <item name="android:textColor">#fff</item>
+    </style>
+
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />

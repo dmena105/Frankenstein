@@ -90,8 +90,8 @@
         <activity android:name=".SaveNewEntryActivity" />
         <activity
             android:name=".SettingsActivity"
+            android:theme="@style/SettingsTheme"
             android:label="@string/title_activity_settings">
-
         </activity>
     </application>
 
