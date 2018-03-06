@@ -32,6 +32,7 @@ public class BoomButtonDisplayMain {
     private ArrayList<Marker> mAllMarkers;
     private Marker mCurrentMarkerSelected;
     private Marker mCustomLocationMarker;
+    private float mAzimuth;
 
     public void setCurrentMarker(Marker mCurrentMarker) {
         this.mCurrentMarker = mCurrentMarker;
@@ -52,7 +53,7 @@ public class BoomButtonDisplayMain {
     // Constructor for map fragment
     public BoomButtonDisplayMain(BoomMenuButton boomMenuButton, Context context
             , GoogleMap mMap, Marker mCurrentMarker, ArrayList<Marker> mAllMarkers
-            , Marker mCurrentMarkerSelected, Marker mCustomLocationMarker){
+            , Marker mCurrentMarkerSelected, Marker mCustomLocationMarker, float mAzimuth){
         mBoomButton = boomMenuButton;
         this.context = context;
         this.mMap = mMap;
@@ -60,6 +61,7 @@ public class BoomButtonDisplayMain {
         this.mAllMarkers = mAllMarkers;
         this.mCurrentMarkerSelected = mCurrentMarkerSelected;
         this.mCustomLocationMarker = mCustomLocationMarker;
+        this.mAzimuth = mAzimuth;
     }
 
     // Constructor for AR display
@@ -137,7 +139,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCurrentMarker.getPosition());
-                                            newEntry.putExtra("azimuth", );
+                                            newEntry.putExtra("azimuth", mAzimuth);
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -159,6 +161,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCustomLocationMarker.getPosition());
+                                            newEntry.putExtra("azimuth", 0);
                                             context.startActivity(newEntry);
                                         }
                                     }

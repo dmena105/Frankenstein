@@ -374,7 +374,7 @@ public class MainActivity extends AppCompatActivity
                         LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
                                 Double.parseDouble(locInfo[1]));
                         Float azimuth = Float.parseFloat(locInfo[2]);
-                        azimuth = toDegrees(azimuth)+180;
+                        azimuth = (float)toDegrees(azimuth)+180;
                     if (MapFragment.mapIsReady){
                         if (MapFragment.mCurrentMarker != null) {
                             MapFragment.mCurrentMarker.remove();

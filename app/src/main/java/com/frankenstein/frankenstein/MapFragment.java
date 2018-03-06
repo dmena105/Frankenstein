@@ -295,7 +295,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             }
         });
         boomDisplay = new BoomButtonDisplayMain(mBoomButton, getActivity()
-                , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker);
+                , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker, mAzimuth);
         boomDisplay.mapFragmentDisplay();
         Log.d("debug", "Map is ready");
         LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
