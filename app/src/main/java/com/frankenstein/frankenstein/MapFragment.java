@@ -20,6 +20,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.design.widget.FloatingActionButton;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -85,7 +86,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public static boolean mapIsReady = false;
     private final Context mContext = getActivity();
     public static float mAzimuth;
-
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -116,14 +116,12 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onResume() {
         super.onResume();
         mMapView.onResume();
-
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mMapView.onPause();
-
     }
 
     @Override
@@ -132,7 +130,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mMapView.onDestroy();
         mClusterManager = null;
         Log.d("debug", "builder cleared Map");
-
     }
 
     @Override

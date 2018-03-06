@@ -72,7 +72,7 @@ public class SettingsActivity extends AppCompatActivity {
             automaticSwitch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    Log.d(TAG, "" + newValue);
+                    MainActivity.istheToogleforFabOn = (boolean)newValue;
                     return true;
                 }
             });

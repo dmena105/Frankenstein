@@ -3,16 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery Timeline" />
-
-    </group>
-
-    <item android:title="Account">
+    <item android:title="Options">
         <menu>
+            <item
+                android:id="@+id/nav_gallery"
+                android:icon="@drawable/ic_menu_gallery"
+                android:title="Gallery Timeline" />
+
             <item
                 android:id="@+id/nav_setting"
                 android:icon="@drawable/ic_settings"

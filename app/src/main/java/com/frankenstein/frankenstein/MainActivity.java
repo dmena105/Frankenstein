@@ -6,6 +6,7 @@ import android.content.Context;
 import android.arch.persistence.room.Room;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
@@ -21,6 +22,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
+import android.support.design.widget.FloatingActionButton;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -52,6 +55,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import javax.microedition.khronos.opengles.GL;
+
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
 
@@ -75,7 +80,8 @@ public class MainActivity extends AppCompatActivity
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
 
-
+    public FloatingActionButton fab;
+    public static boolean istheToogleforFabOn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +108,25 @@ public class MainActivity extends AppCompatActivity
         mMapButton.setVisibility(View.VISIBLE);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        fab = findViewById(R.id.fab1);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        istheToogleforFabOn = sp.getBoolean("automatic_switch", true);
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mode == 0){
+                    getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
+                    mode = 1;
+                }else if(mode == 1){
+                    getFragmentManager().beginTransaction().add(
+                            com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                    mode = 0;
+                }
+
+            }
+        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -167,7 +192,6 @@ public class MainActivity extends AppCompatActivity
         //Coming Back from Log in Page
         else if(mode == 1){
             Log.d(TAG, "Mode: " + mode);
-
             Thread loadProfile = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -211,37 +235,49 @@ public class MainActivity extends AppCompatActivity
         mApplicationContext.startService(trackIntent);
         mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
 
+    }
 
-        //Listener that allows for the nav view to update when firebase changes somethings
-        //This is mainly useful for when we return from the USERPROFILE ACTIVITY
-        String username = mFirebaseUser.getUid();
-        DatabaseReference navViewUpdate = databaseReference.child("users").child(username).child("profile");
-        navViewUpdate.addChildEventListener(new ChildEventListener() {
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        Log.d(TAG, "OnPostResume");
+        Thread loadProfile = new Thread(new Runnable() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {}
-            //Load the data into the NAV view
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                for (DataSnapshot dss : dataSnapshot.getChildren()) {
-                    nickname = dss.child("username").getValue(String.class);
-                    String encodedImage = dss.child("profilePicture").getValue(String.class);
-                    if (encodedImage != null) {
-                        byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
-                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-                        mImageViewProfilePic.setImageBitmap(decodedByte);
+            public void run() {
+                DatabaseReference refUtil = databaseReference.child("users").child(username);
+                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.child("items").hasChildren())
+                            itemcount = dataSnapshot.child("items").getChildrenCount();
+
+                        if (dataSnapshot.child("profile").hasChildren()) {
+                            for (DataSnapshot dss : dataSnapshot.child("profile").getChildren()) {
+                                String nickname = dss.child("username").getValue(String.class);
+                                String encodedImage = dss.child("profilePicture").getValue(String.class);
+                                if (encodedImage != null) {
+                                    byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
+                                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                    mImageViewProfilePic.setImageBitmap(decodedByte);
+                                }
+
+                                else
+                                    mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                                if (nickname != null) {
+                                    mTextViewNickname.setText(nickname);
+                                }
+                            }
+                        }
                     }
-                    else mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
-                    if (nickname != null) mTextViewNickname.setText(nickname);
-                }
-            }
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
 
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+
+            }
+        });
+        loadProfile.start();
     }
 
     @Override
@@ -291,6 +327,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume(){
         super.onResume();
+        if(istheToogleforFabOn){
+            fab.setVisibility(View.VISIBLE);
+            Log.d(TAG, "visible");
+        }
+        else {
+            fab.setVisibility(View.INVISIBLE);
+            Log.d(TAG, "not visible");
+        }
         Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
         Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
     }
@@ -310,34 +354,36 @@ public class MainActivity extends AppCompatActivity
     float[] mGeomagnetic;
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-            mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
-        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-            mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
-        if (mGravity != null && mGeomagnetic != null) {
-            float R[] = new float[9];
-            float I[] = new float[9];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            if (success) {
-                float orientation[] = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                Log.d("s1", ""+toDegrees(orientation[1]));
-                if(abs(toDegrees(orientation[1])) < switchAngle && mode == 0){
-                    Log.d("s1", "Going to map");
-                    getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
-                    mode = 1;
-                    mARButton.setVisibility(View.GONE);
-                    mMapButton.setVisibility(View.VISIBLE);
-                } else if(abs(toDegrees(orientation[1])) >= switchAngle && mode == 1){
-                    Log.d("s1", "Going to ar");
-                    getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
-                    Global.arFragment.onSensorChanged(orientation);
-                    mode = 0;
-                    mARButton.setVisibility(View.VISIBLE);
-                    mMapButton.setVisibility(View.GONE);
-                } else if (abs(toDegrees(orientation[1])) >= switchAngle){
-                    Log.d("s1", "updating ar");
-                    Global.arFragment.onSensorChanged(orientation);
+        if(!istheToogleforFabOn) {
+            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+                mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
+            if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+                mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
+            if (mGravity != null && mGeomagnetic != null) {
+                float R[] = new float[9];
+                float I[] = new float[9];
+                boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+                if (success) {
+                    float orientation[] = new float[3];
+                    SensorManager.getOrientation(R, orientation);
+                    //Log.d("s1", ""+toDegrees(orientation[1]));
+                    if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0) {
+                        Log.d("s1", "Going to map");
+                        getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
+                        mode = 1;
+                        mARButton.setVisibility(View.GONE);
+                        mMapButton.setVisibility(View.VISIBLE);
+                    } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1) {
+                        Log.d("s1", "Going to ar");
+                        getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                        Global.arFragment.onSensorChanged(orientation);
+                        mode = 0;
+                        mARButton.setVisibility(View.VISIBLE);
+                        mMapButton.setVisibility(View.GONE);
+                    } else if (abs(toDegrees(orientation[1])) >= switchAngle) {
+                        Log.d("s1", "updating ar");
+                        Global.arFragment.onSensorChanged(orientation);
+                    }
                 }
             }
         }
