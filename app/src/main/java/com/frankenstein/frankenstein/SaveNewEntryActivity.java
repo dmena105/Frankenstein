@@ -77,13 +77,13 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                         refUtil.child("entryId").getRef().setValue(MainActivity.itemcount);
                         refUtil.child("userEmail").getRef().setValue(mFirebaseUser.getEmail());
                         refUtil.child("postTime").getRef().setValue(System.currentTimeMillis());
-                        // TODO: Azimuth
                         refUtil.child("azimuth").getRef().setValue(mAzimuth);
                         refUtil.child("latitude").getRef().setValue(mLocation.latitude);
                         refUtil.child("longitude").getRef().setValue(mLocation.longitude);
                         refUtil.child("postText").getRef().setValue(mPostText.getText().toString());
                         refUtil.child("picture").getRef().setValue(encodedImage);
                         refUtil.child("summary").getRef().setValue(summaryText);
+                        Log.d("debug", "azimuth = "+mAzimuth);
                         Log.d("debug", "data saved to: " + MainActivity.username);
                     }
                 };

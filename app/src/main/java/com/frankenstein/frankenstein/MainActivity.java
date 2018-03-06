@@ -354,36 +354,35 @@ public class MainActivity extends AppCompatActivity
     float[] mGeomagnetic;
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(!istheToogleforFabOn) {
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-                mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
-            if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-                mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
-            if (mGravity != null && mGeomagnetic != null) {
-                float R[] = new float[9];
-                float I[] = new float[9];
-                boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-                if (success) {
-                    float orientation[] = new float[3];
-                    SensorManager.getOrientation(R, orientation);
-                    //Log.d("s1", ""+toDegrees(orientation[1]));
-                    if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0) {
-                        Log.d("s1", "Going to map");
-                        getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
-                        mode = 1;
-                        mARButton.setVisibility(View.GONE);
-                        mMapButton.setVisibility(View.VISIBLE);
-                    } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1) {
-                        Log.d("s1", "Going to ar");
-                        getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
-                        Global.arFragment.onSensorChanged(orientation);
-                        mode = 0;
-                        mARButton.setVisibility(View.VISIBLE);
-                        mMapButton.setVisibility(View.GONE);
-                    } else if (abs(toDegrees(orientation[1])) >= switchAngle) {
-                        Log.d("s1", "updating ar");
-                        Global.arFragment.onSensorChanged(orientation);
-                    }
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                Log.d("gb", "Testing");
+                Global.mapFragment.setmAzimuth((float)(toDegrees(orientation[0])+180));
+                if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0 && !istheToogleforFabOn) {
+                    Log.d("s1", "Going to map");
+                    getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
+                    mode = 1;
+                    mARButton.setVisibility(View.GONE);
+                    mMapButton.setVisibility(View.VISIBLE);
+                } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1 && !istheToogleforFabOn) {
+                    Log.d("s1", "Going to ar");
+                    getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                    Global.arFragment.onSensorChanged(orientation);
+                    mode = 0;
+                    mARButton.setVisibility(View.VISIBLE);
+                    mMapButton.setVisibility(View.GONE);
+                } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 0) {
+                    Log.d("s1", "updating ar");
+                    Global.arFragment.onSensorChanged(orientation);
                 }
             }
         }
@@ -426,7 +425,6 @@ public class MainActivity extends AppCompatActivity
                             MapFragment.mCurrentMarker.remove();
                         }
                         // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
-                        MapFragment.mAzimuth = azimuth;
                         MapFragment.mCurrentMarker = MapFragment.mMap.addMarker(new MarkerOptions()
                                 .snippet("Current Location")
                                 .position(currLoc)

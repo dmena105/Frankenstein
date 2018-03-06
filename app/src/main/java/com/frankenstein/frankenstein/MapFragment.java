@@ -85,7 +85,17 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public static TreeMap<String, String> mPictureCache;
     public static boolean mapIsReady = false;
     private final Context mContext = getActivity();
-    public static float mAzimuth;
+    private float mAzimuth;
+
+    public void setmAzimuth(float azimuth){
+        mAzimuth = azimuth;
+        Log.d("gb", "Map's azimuth = "+azimuth);
+    }
+
+    public float getAzimuth(){
+        return mAzimuth;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -407,10 +417,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         @Override
         protected void onBeforeClusterItemRendered(ClusteredMarker item,
                                                    MarkerOptions markerOptions) {
-            final BitmapDescriptor markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
+            /*final BitmapDescriptor markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
             markerOptions
                     .icon(markerDescriptor)
-                    .alpha((float)0.77);
+                    .alpha((float)0.77);*/
         }
     }
 }
