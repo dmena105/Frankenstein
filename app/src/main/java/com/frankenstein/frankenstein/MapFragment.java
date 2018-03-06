@@ -84,6 +84,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public static TreeMap<String, String> mPictureCache;
     public static boolean mapIsReady = false;
     private final Context mContext = getActivity();
+    public static float mAzimuth;
 
     @Override
     public void onCreate(Bundle savedInstanceState){

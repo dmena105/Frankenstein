@@ -4,9 +4,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_save"
-        android:title="save"
-        android:icon="@drawable/save"
+        android:id="@+id/action_back"
+        android:title="Back"
+        android:icon="@drawable/back"
         android:orderInCategory="100"
         app:showAsAction="always"/>
 

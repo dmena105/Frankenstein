@@ -51,7 +51,6 @@ import com.nightonke.boommenu.BoomMenuButton;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
-import java.util.TreeMap;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.toDegrees;
@@ -76,18 +75,11 @@ public class MainActivity extends AppCompatActivity
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
 
-    //Database Variables
-    private profileEntry entry;
-    private List<profileEntry> values;
-    private static AppDatabase db;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "entries").build();
-
         setContentView(R.layout.activity_main);
         mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
@@ -106,6 +98,8 @@ public class MainActivity extends AppCompatActivity
         Global.mapFragment = new com.frankenstein.frankenstein.MapFragment();
         Global.mapFragment.setRetainInstance(true);
         getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.mapFragment).commit();
+        mARButton.setVisibility(View.GONE);
+        mMapButton.setVisibility(View.VISIBLE);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -199,13 +193,6 @@ public class MainActivity extends AppCompatActivity
                                     if (nickname != null) {
                                         mTextViewNickname.setText(nickname);
                                     }
-                                    //Load Items to the Database
-                                    entry = new profileEntry();
-                                    entry.setNickname(nickname);
-                                    entry.setPhoto1(encodedImage.substring(0, (encodedImage.length()/100)));
-                                    entry.setPhoto2(encodedImage.substring(encodedImage.length()/2));
-                                    profileEntry[] params = { entry };
-                                    new dataWriter().execute(params);
                                 }
                             }
                         }
@@ -220,13 +207,10 @@ public class MainActivity extends AppCompatActivity
             loadProfile.start();
 
         }
-        //The user was already logged in, Mode == 2
-        else {
-            new dataLoader().execute();
-            Intent trackIntent = new Intent(this, TrackingService.class);
-            mApplicationContext.startService(trackIntent);
-            mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-        }
+        Intent trackIntent = new Intent(this, TrackingService.class);
+        mApplicationContext.startService(trackIntent);
+        mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
+
 
         //Listener that allows for the nav view to update when firebase changes somethings
         //This is mainly useful for when we return from the USERPROFILE ACTIVITY
@@ -362,46 +346,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {}
 
-
-    public class dataLoader extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            values = db.myDao().loadAllEntries();/*
-            Log.d(TAG, "Nickname: " + values.get(0).getNickname());
-            Log.d(TAG, "Photo1: " + values.get(0).getPhoto1());
-            Log.d(TAG, "Photo2: " + values.get(0).getPhoto2());*/
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-        }
-    }
-
-    public static class dataWriter extends AsyncTask<profileEntry, Void, Void> {
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Void doInBackground(profileEntry ...profileEntries) {
-            profileEntry entry = profileEntries[0];
-            // Log.d("TESTING123", "DataWriter: " + entry.getPhoto1() + "HELLLO" + entry.getPhoto2());
-            db.myDao().insertEntry(entry);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-        }
-    }
-
     @Override
     public void onServiceConnected(ComponentName name, IBinder service){
         mapFragmentMessenger = new Messenger(new MainActivityMessageHandler());
@@ -425,15 +369,18 @@ public class MainActivity extends AppCompatActivity
         public void handleMessage(Message msg){
             switch (msg.what){
                 case TrackingService.UPDATE_LOCATION:
-                    if (MapFragment.mapIsReady){
                         Bundle bundle = msg.getData();
                         String[] locInfo = bundle.getString(TrackingService.LOCATION_KEY).split(" ");
                         LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
                                 Double.parseDouble(locInfo[1]));
+                        Float azimuth = Float.parseFloat(locInfo[2]);
+                        azimuth = toDegrees(azimuth)+180;
+                    if (MapFragment.mapIsReady){
                         if (MapFragment.mCurrentMarker != null) {
                             MapFragment.mCurrentMarker.remove();
                         }
                         // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
+                        MapFragment.mAzimuth = azimuth;
                         MapFragment.mCurrentMarker = MapFragment.mMap.addMarker(new MarkerOptions()
                                 .snippet("Current Location")
                                 .position(currLoc)
