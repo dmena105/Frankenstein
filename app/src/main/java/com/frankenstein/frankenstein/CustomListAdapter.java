@@ -2,7 +2,11 @@ package com.frankenstein.frankenstein;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,10 +25,13 @@ import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 /**
  * Created by davidmena on 2/24/18.
+ *
+ *
  */
 
 public class CustomListAdapter extends ArrayAdapter<Card>{
@@ -43,7 +50,6 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
     }
 
 
-
     public CustomListAdapter(Context context, int resource, ArrayList<Card> arrayList) {
         super(context, resource, arrayList);
         mContext = context;
@@ -57,6 +63,17 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
     public View getView(int position, View convertView, ViewGroup parent) {
         String caption = getItem(position).getCaption();
         String imgUrl = getItem(position).getImgURL();
+        String imgUri = getItem(position).getImgURL();
+        Bitmap decodedByte;
+
+        //Change bitmap string to Bitmap item
+        if (imgUrl != null) {
+            byte[] decodedString = Base64.decode(imgUrl, Base64.DEFAULT);
+            decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            //get a URI path from bitmap
+            imgUri = getImageUri(getContext(), decodedByte);
+        }
+
 
         try {
             //ViewHolder Object
@@ -93,8 +110,9 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
                     .showImageOnFail(defaultImage)
                     .showImageOnLoading(defaultImage).build();
 
+
             //This sets the loader and is the responsible for the progress bar animations
-            imageLoader.displayImage(imgUrl, holder.image, options, new ImageLoadingListener() {
+            imageLoader.displayImage(imgUri, holder.image, options, new ImageLoadingListener() {
                 @Override
                 public void onLoadingStarted(String imageUri, View view) {
                     holder.progressBar.setVisibility(View.VISIBLE);
@@ -122,6 +140,13 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
             Log.e(TAG, "Illegal Argument: " + e.getMessage());
             return convertView;
         }
+    }
+
+    public String getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        return MediaStore.Images.Media.insertImage(inContext.getContentResolver(),
+                inImage, "Title", null);
     }
 
 

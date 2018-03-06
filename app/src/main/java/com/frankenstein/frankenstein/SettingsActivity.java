@@ -72,7 +72,8 @@ public class SettingsActivity extends AppCompatActivity {
             automaticSwitch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    return false;
+                    Log.d(TAG, "" + newValue);
+                    return true;
                 }
             });
         }
