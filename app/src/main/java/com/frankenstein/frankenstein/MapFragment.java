@@ -79,7 +79,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private Marker mCurrentMarkerSelected;
     private Marker mCustomLocationMarker;
     private ClusterManager<ClusteredMarker> mClusterManager;
-    private ArrayList<Marker> mAllMarkers;
+    public static ArrayList<Marker> mAllMarkers;
     public static BoomButtonDisplayMain boomDisplay;
     public static TreeMap<String, String> mPictureCache;
     public static boolean mapIsReady = false;
@@ -373,13 +373,14 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                     briefMarkerInfo.setLatitude(lat);
                                     briefMarkerInfo.setLongitude(lng);
                                     briefMarkerInfo.setPostTime(dss.child("postTime").getValue(Long.class));
-//                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
                                     briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
                                     mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
                                     MarkerOptions markerOptions = new MarkerOptions()
                                             .position(new LatLng(lat, lng))
                                             .visible(false);
-                                    mAllMarkers.add(mMap.addMarker(markerOptions));
+                                    Marker marker = mMap.addMarker(markerOptions);
+                                    marker.setTag(briefMarkerInfo);
+                                    mAllMarkers.add(marker);
                                 }
                                 if (boomDisplay != null) boomDisplay.setAllMarkers(mAllMarkers);
                                 mClusterManager.cluster();
