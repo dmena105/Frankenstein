@@ -25,7 +25,7 @@ public class GalleryTimeline extends AppCompatActivity {
         mListView = (ListView) findViewById(R.id.GalleryTimeLineListView);
 
         //Set up the Toolbar
-        toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbarForGalleryTimeline);
+        toolbar = (android.support.v7.widget.Toolbar)findViewById(R.id.toolbarForGalleryTimeline);
         setSupportActionBar(toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.white));
 
