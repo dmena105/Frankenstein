@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserProfileActivity extends AppCompatActivity {
-    private static final String TAG = "TESTING123";
+    private static final String TAG = "USERRPOFILE";
 
     private ViewGroup mTransitionGroup;
     private Button mLogOutButton;
@@ -76,10 +76,6 @@ public class UserProfileActivity extends AppCompatActivity {
     private final int SELECT_IMAGE = 1;
     private final int CROP_IMAGE = 2;
     private Uri mImageSource = null;
-
-    //Database
-    List<profileEntry> values;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,6 +134,7 @@ public class UserProfileActivity extends AppCompatActivity {
         });
 
         email.setText(mFirebaseUser.getEmail());
+
         //This is to load the UserName and Image from FireBase
         DatabaseReference nickname = mDatabase.child("users").child(username).child("profile");
         nickname.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -168,6 +165,7 @@ public class UserProfileActivity extends AppCompatActivity {
         toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbarForUserProfile);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("User Profile");
+        toolbar.setTitleTextColor(getResources().getColor(R.color.white));
 
         //Set up the LogOut Animation
         mTransitionGroup = findViewById(R.id.transitionContainer_logout);
@@ -187,7 +185,6 @@ public class UserProfileActivity extends AppCompatActivity {
                     mFirebaseAuth.signOut();
                     Intent login_intent = new Intent(mContext, LogInActivity.class);
                     login_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    AppDatabase.destroyInstance();
                     startActivity(login_intent);
                 }
                 else {
@@ -197,7 +194,6 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             }
         });
-
 
         mCancelLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -289,7 +285,7 @@ public class UserProfileActivity extends AppCompatActivity {
                             if (nickName != null)
                                 profile.child(key).child("username").setValue(nickName.getText().toString().trim());
                             if (mImageSource != null) {
-                                // Turning Uri into Bitmap
+                                //Turning Uri into Bitmap
                                 try {
                                     InputStream image_stream = getContentResolver().openInputStream(mImageSource);
                                     Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
@@ -308,7 +304,6 @@ public class UserProfileActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
                 }
             });
             return null;

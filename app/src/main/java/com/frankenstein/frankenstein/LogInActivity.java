@@ -36,27 +36,12 @@ public class LogInActivity extends AppCompatActivity {
     private FirebaseAuth mFirebaseAuth;
     private final Context mContext = this;
 
-    //TESTING
-    private FirebaseUser mFirebaseUser;
-    private DatabaseReference mDatabase;
-
-    private profileEntry entry;
-    static int entryNumber;
-    int unitPreference;
-    Global globalVariable;
-    public static String firebaseUser;
-
-
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
-        //ROOM ITEMS
-//        globalVariable = (Global) getApplicationContext();
-//        unitPreference  = globalVariable.getUnitPreference();
-//        entryNumber = globalVariable.getEntryNumber();
         //Log In Items
         mFirebaseAuth = FirebaseAuth.getInstance();
         mUsernameText = findViewById(R.id.editText_signin_username);

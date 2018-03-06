@@ -76,18 +76,10 @@ public class MainActivity extends AppCompatActivity
     private Application mApplicationContext;
 
 
-    //Database Variables
-    private profileEntry entry;
-    private List<profileEntry> values;
-    private static AppDatabase db;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "entries").build();
-
         setContentView(R.layout.activity_main);
         mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
@@ -193,20 +185,12 @@ public class MainActivity extends AppCompatActivity
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
                                     }
-                                    // TODO: Put this into a buffer - SQL username->profile image
 
                                     else
                                         mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
                                     if (nickname != null) {
                                         mTextViewNickname.setText(nickname);
                                     }
-                                    //Load Items to the Database
-                                    entry = new profileEntry();
-                                    entry.setNickname(nickname);
-                                    entry.setPhoto1(encodedImage.substring(0, (encodedImage.length()/100)));
-                                    entry.setPhoto2(encodedImage.substring(encodedImage.length()/2));
-                                    profileEntry[] params = { entry };
-                                    new dataWriter().execute(params);
                                 }
                             }
                         }
@@ -221,13 +205,10 @@ public class MainActivity extends AppCompatActivity
             loadProfile.start();
 
         }
-        //The user was already logged in, Mode == 2
-        else {
-            new dataLoader().execute();
-            Intent trackIntent = new Intent(this, TrackingService.class);
-            mApplicationContext.startService(trackIntent);
-            mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
-        }
+        Intent trackIntent = new Intent(this, TrackingService.class);
+        mApplicationContext.startService(trackIntent);
+        mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
+
 
         //Listener that allows for the nav view to update when firebase changes somethings
         //This is mainly useful for when we return from the USERPROFILE ACTIVITY
@@ -362,46 +343,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {}
-
-
-    public class dataLoader extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            values = db.myDao().loadAllEntries();/*
-            Log.d(TAG, "Nickname: " + values.get(0).getNickname());
-            Log.d(TAG, "Photo1: " + values.get(0).getPhoto1());
-            Log.d(TAG, "Photo2: " + values.get(0).getPhoto2());*/
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-        }
-    }
-
-    public static class dataWriter extends AsyncTask<profileEntry, Void, Void> {
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Void doInBackground(profileEntry ...profileEntries) {
-            profileEntry entry = profileEntries[0];
-            Log.d("TESTING123", "DataWriter: " + entry.getPhoto1() + "HELLLO" + entry.getPhoto2());
-            db.myDao().insertEntry(entry);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-        }
-    }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service){
