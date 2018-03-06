@@ -97,8 +97,8 @@ public class DisplayEntryActivity extends AppCompatActivity {
                     if (expanded){
                         ViewGroup.LayoutParams layout = mImageView.getLayoutParams();
                         //dp * (dpi / 160)
-                        layout.width = (int)convertDpToPixel(177, mContext);
-                        layout.height = (int)convertDpToPixel(300, mContext);
+                        layout.width = (int)convertDpToPixel(200, mContext);
+                        layout.height = (int)convertDpToPixel(272, mContext);
                         mImageView.setLayoutParams(imageLayout);
                         //mImageViewContainer.setLayoutParams(pageLayout);
                         Log.d("debug", "expanded is " + expanded);

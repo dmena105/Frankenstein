@@ -10,6 +10,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
@@ -31,6 +32,7 @@ public class BoomButtonDisplayMain {
     private ArrayList<Marker> mAllMarkers;
     private Marker mCurrentMarkerSelected;
     private Marker mCustomLocationMarker;
+    private float mAzimuth;
 
     public void setCurrentMarker(Marker mCurrentMarker) {
         this.mCurrentMarker = mCurrentMarker;
@@ -51,7 +53,7 @@ public class BoomButtonDisplayMain {
     // Constructor for map fragment
     public BoomButtonDisplayMain(BoomMenuButton boomMenuButton, Context context
             , GoogleMap mMap, Marker mCurrentMarker, ArrayList<Marker> mAllMarkers
-            , Marker mCurrentMarkerSelected, Marker mCustomLocationMarker){
+            , Marker mCurrentMarkerSelected, Marker mCustomLocationMarker, float mAzimuth){
         mBoomButton = boomMenuButton;
         this.context = context;
         this.mMap = mMap;
@@ -59,6 +61,7 @@ public class BoomButtonDisplayMain {
         this.mAllMarkers = mAllMarkers;
         this.mCurrentMarkerSelected = mCurrentMarkerSelected;
         this.mCustomLocationMarker = mCustomLocationMarker;
+        this.mAzimuth = mAzimuth;
     }
 
     // Constructor for AR display
@@ -70,13 +73,14 @@ public class BoomButtonDisplayMain {
     }
 
     public void mapFragmentDisplay(){
-        if (mBoomButton.getBuilders() != null) mBoomButton.clearBuilders();
-        mBoomButton.setInFragment(true);
-        mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-        mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-        mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
-        mBoomButton.setBoomEnum(BoomEnum.RANDOM);
+        if (mBoomButton.getBuilders().size() != 0) mBoomButton.clearBuilders();
         try {
+            mBoomButton.setInFragment(true);
+            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
+            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
+            mBoomButton.setBoomEnum(BoomEnum.RANDOM);
+            mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
+            Log.d("debug", ""+ mBoomButton.getButtonEnum().toString());
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
                     case 0:
@@ -135,6 +139,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCurrentMarker.getPosition());
+                                            newEntry.putExtra("azimuth", mAzimuth);
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -156,6 +161,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCustomLocationMarker.getPosition());
+                                            newEntry.putExtra("azimuth", 0);
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -165,12 +171,11 @@ public class BoomButtonDisplayMain {
                     case 4:
                         TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
-                                .normalImageRes(R.drawable.ic_boom_button_add)
+                                .normalImageRes(R.drawable.ic_update_map)
                                 .normalText("Update")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-
                                     }
                                 });
                         mBoomButton.addBuilder(builder4);
@@ -183,13 +188,13 @@ public class BoomButtonDisplayMain {
     }
 
     public void arFragmentDisplay(){
-        if (mBoomButton.getBuilders() != null) mBoomButton.clearBuilders();
-        mBoomButton.setInFragment(true);
-        mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-        mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-        mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
-        mBoomButton.setBoomEnum(BoomEnum.RANDOM);
+        if (mBoomButton.getBuilders().size() != 0) mBoomButton.clearBuilders();
         try {
+            mBoomButton.setInFragment(true);
+            mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
+            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
+            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
+            mBoomButton.setBoomEnum(BoomEnum.RANDOM);
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
                     case 0:

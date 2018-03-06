@@ -81,9 +81,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private ClusterManager<ClusteredMarker> mClusterManager;
     private ArrayList<Marker> mAllMarkers;
     public static BoomButtonDisplayMain boomDisplay;
-    private TreeMap<String, String> mPictureCache;
+    public static TreeMap<String, String> mPictureCache;
     public static boolean mapIsReady = false;
     private final Context mContext = getActivity();
+    public static float mAzimuth;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -97,7 +98,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainMap);
-        // BoomButton setup
         setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -295,7 +295,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             }
         });
         boomDisplay = new BoomButtonDisplayMain(mBoomButton, getActivity()
-                , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker);
+                , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker, mAzimuth);
         boomDisplay.mapFragmentDisplay();
         Log.d("debug", "Map is ready");
         LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
@@ -343,10 +343,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         String imageEncodedString = null;
                         Bitmap iconBitmap = null;
-                        if (dataSnapshot.child("profile").hasChildren()){
-                            for (DataSnapshot dssProfile: dataSnapshot.child("profile").getChildren()){
+                        if (dataSnapshot.child("profile").hasChildren()) {
+                            for (DataSnapshot dssProfile : dataSnapshot.child("profile").getChildren()) {
                                 imageEncodedString = dssProfile.child("profilePicture").getValue(String.class);
-                                if (imageEncodedString != null){
+                                if (imageEncodedString != null) {
                                     try {
                                         /*Uri image_uri = Uri.parse(imageEncodedString);
                                         InputStream image_stream = getActivity().getContentResolver().openInputStream(image_uri);
@@ -357,31 +357,35 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                         Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         // scale bitmap
                                         iconBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, false);
-                                    } catch (Exception e){
+                                    } catch (Exception e) {
                                         Log.d("debug", "profile picture not found");
                                     }
                                 }
                             }
                         }
-                        if (dataSnapshot.child("items").hasChildren()){
-                            for (DataSnapshot dss: dataSnapshot.child("items").getChildren()){
-                                double lat = dss.child("latitude").getValue(Double.class);
-                                double lng = dss.child("longitude").getValue(Double.class);
-                                GalleryEntry briefMarkerInfo = new GalleryEntry();
-                                briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
-                                briefMarkerInfo.setLatitude(lat);
-                                briefMarkerInfo.setLongitude(lng);
-                                briefMarkerInfo.setPostTime(dss.child("postTime").getValue(Long.class));
+                        try {
+                            if (dataSnapshot.child("items").hasChildren()) {
+                                for (DataSnapshot dss : dataSnapshot.child("items").getChildren()) {
+                                    double lat = dss.child("latitude").getValue(Double.class);
+                                    double lng = dss.child("longitude").getValue(Double.class);
+                                    GalleryEntry briefMarkerInfo = new GalleryEntry();
+                                    briefMarkerInfo.setEntryId(dss.child("entryId").getValue(Long.class));
+                                    briefMarkerInfo.setLatitude(lat);
+                                    briefMarkerInfo.setLongitude(lng);
+                                    briefMarkerInfo.setPostTime(dss.child("postTime").getValue(Long.class));
 //                                briefMarkerInfo.setPicture(dss.child("picture").getValue(String.class));
-                                briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
-                                mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
-                                MarkerOptions markerOptions = new MarkerOptions()
-                                        .position(new LatLng(lat, lng))
-                                        .visible(false);
-                                mAllMarkers.add(mMap.addMarker(markerOptions));
+                                    briefMarkerInfo.setSummary(dss.child("summary").getValue(String.class));
+                                    mClusterManager.addItem(new ClusteredMarker(briefMarkerInfo, iconBitmap));
+                                    MarkerOptions markerOptions = new MarkerOptions()
+                                            .position(new LatLng(lat, lng))
+                                            .visible(false);
+                                    mAllMarkers.add(mMap.addMarker(markerOptions));
+                                }
+                                if (boomDisplay != null) boomDisplay.setAllMarkers(mAllMarkers);
+                                mClusterManager.cluster();
                             }
-                            if (boomDisplay != null) boomDisplay.setAllMarkers(mAllMarkers);
-                            mClusterManager.cluster();
+                        } catch(Exception e){
+                            Log.d("debug", "NULL POINTER FOR BOOM MENU");
                         }
                     }
                     @Override

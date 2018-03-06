@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity
         Global.mapFragment = new com.frankenstein.frankenstein.MapFragment();
         Global.mapFragment.setRetainInstance(true);
         getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.mapFragment).commit();
+        mARButton.setVisibility(View.GONE);
+        mMapButton.setVisibility(View.VISIBLE);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -367,15 +369,18 @@ public class MainActivity extends AppCompatActivity
         public void handleMessage(Message msg){
             switch (msg.what){
                 case TrackingService.UPDATE_LOCATION:
-                    if (MapFragment.mapIsReady){
                         Bundle bundle = msg.getData();
                         String[] locInfo = bundle.getString(TrackingService.LOCATION_KEY).split(" ");
                         LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
                                 Double.parseDouble(locInfo[1]));
+                        Float azimuth = Float.parseFloat(locInfo[2]);
+                        azimuth = (float)toDegrees(azimuth)+180;
+                    if (MapFragment.mapIsReady){
                         if (MapFragment.mCurrentMarker != null) {
                             MapFragment.mCurrentMarker.remove();
                         }
                         // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
+                        MapFragment.mAzimuth = azimuth;
                         MapFragment.mCurrentMarker = MapFragment.mMap.addMarker(new MarkerOptions()
                                 .snippet("Current Location")
                                 .position(currLoc)

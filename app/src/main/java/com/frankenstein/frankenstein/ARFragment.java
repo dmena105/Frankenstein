@@ -52,7 +52,6 @@ import static java.lang.Math.toDegrees;
 
 public class ARFragment extends android.app.Fragment {
     private BoomMenuButton mBoomButton;
-    private ArrayList<BoomButtonBuilder> builders;
     //Currently displayed angles
     Float cAzimuth = (float)0.0;
     Float cPitch = (float)0.0;
@@ -204,7 +203,6 @@ public class ARFragment extends android.app.Fragment {
     public void onDestroy() {
         super.onDestroy();
         cameraView.destroy();
-        Log.d("debug", "builder cleared AR");
 
     }
     public void onSensorChanged(float[] orientation) {

@@ -35,6 +35,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
     private BoomMenuButton mBoomMenu;
     private Button mSaveEntry;
     private FirebaseUser mFirebaseUser;
+    private Float mAzimuth;
     private final Context mContext = this;
 
     @Override
@@ -45,6 +46,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
         mSummaryText = findViewById(R.id.EditText_summary_newEntry);
         mPostText = findViewById(R.id.editText_text_newEntry);
         mImage = EditNewEntryActivity.bitmap;
+        mAzimuth = EditNewEntryActivity.azimuth;
         mLocation = EditNewEntryActivity.location;
         mBoomMenu = findViewById(R.id.boombutton_saveNewEntry);
         mSaveEntry = findViewById(R.id.button_save_newEntry);
@@ -76,7 +78,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                         refUtil.child("userEmail").getRef().setValue(mFirebaseUser.getEmail());
                         refUtil.child("postTime").getRef().setValue(System.currentTimeMillis());
                         // TODO: Azimuth
-                        refUtil.child("azimuth");
+                        refUtil.child("azimuth").getRef().setValue(mAzimuth);
                         refUtil.child("latitude").getRef().setValue(mLocation.latitude);
                         refUtil.child("longitude").getRef().setValue(mLocation.longitude);
                         refUtil.child("postText").getRef().setValue(mPostText.getText().toString());
@@ -112,6 +114,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                                     Intent retake = new Intent(mContext, EditNewEntryActivity.class);
                                     retake.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     retake.putExtra("location", mLocation);
+                                    retake.putExtra("azimuth", mAzimuth);
                                     startActivity(retake);
                                 }
                             });

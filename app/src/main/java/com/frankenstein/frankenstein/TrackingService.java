@@ -60,8 +60,8 @@ public class TrackingService extends Service {
 
     public static boolean isRunning() {return isRunning;}
 
-    public String formMessage(double lat, double lng){
-        return lat + " " + lng;
+    public String formMessage(double lat, double lng, float azimuth){
+        return lat + " " + lng + " " + azimuth;
     }
 
     public void sendMessage(String info){
@@ -92,7 +92,8 @@ public class TrackingService extends Service {
                             if (location != null){
                                 double latitude = location.getLatitude();
                                 double longitude = location.getLongitude();
-                                sendMessage(formMessage(latitude, longitude));
+                                float azimuth = location.getBearing();
+                                sendMessage(formMessage(latitude, longitude, azimuth));
                             }
                         }
                         @Override
