@@ -13,12 +13,17 @@ import static java.lang.Math.abs;
  */
 
 public class Global extends Application{
+    //Just to keep our records strait, so there's never multiple fragments/sensors
+    // and so everyone can reference the same sensors/fragments
     static SensorManager mSensorManager;
     static Sensor accelerometer;
     static Sensor magnetometer;
     static ARFragment arFragment;
     static MapFragment mapFragment;
 
+    //Returns a fraction of the angular distance. >frames = >angles. Used so objects move
+    // smoothly: small changes yield small incremental movement, big changes yield
+    // big ones.
     public static float angleDiff(float target, float current, int frames){
         float diff;
         float ret;
@@ -42,6 +47,7 @@ public class Global extends Application{
         return ret;
     }
 
+    //Angular distance. Probably a library somewhere, this works fine.
     public static float angleDist(float current, float target){
         float d1 = current-target;
         float d2;

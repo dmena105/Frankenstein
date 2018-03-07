@@ -378,15 +378,15 @@ public class MainActivity extends AppCompatActivity
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
             mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
         if (mGravity != null && mGeomagnetic != null) {
+            //Calculate orientation
             float R[] = new float[9];
             float I[] = new float[9];
             boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                int test = ((int)toDegrees(orientation[0]));
-                Log.d("gb", "Testing "+test);
                 Global.mapFragment.setmAzimuth((float)(toDegrees(orientation[0])+180));
+                //Choose map mode and pass data to AR if needed.
                 if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0 && !istheToogleforFabOn) {
                     Log.d("s1", "Going to map");
                     getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
