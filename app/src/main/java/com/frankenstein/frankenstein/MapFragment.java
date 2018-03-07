@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Criteria;
@@ -27,6 +28,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -95,6 +97,17 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
 
     public float getAzimuth(){
         return mAzimuth;
+    }
+
+    public double[] getLatLng(){
+        double[] ret = new double[2];
+        if(mCurrentMarker != null){
+            ret[0] = mCurrentMarker.getPosition().latitude;
+            ret[1] = mCurrentMarker.getPosition().longitude;
+        } else {
+            ret = null;
+        }
+        return ret;
     }
 
     @Override
@@ -285,6 +298,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
+                if (mCustomLocationMarker != null) {
+                    mCustomLocationMarker.remove();
+                    mCustomLocationMarker = null;
+                }
                 mCustomLocationMarker = mMap.addMarker(new MarkerOptions()
                         .position(latLng)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
@@ -357,9 +374,6 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                 imageEncodedString = dssProfile.child("profilePicture").getValue(String.class);
                                 if (imageEncodedString != null) {
                                     try {
-                                        /*Uri image_uri = Uri.parse(imageEncodedString);
-                                        InputStream image_stream = getActivity().getContentResolver().openInputStream(image_uri);
-                                        Bitmap bitmap= BitmapFactory.decodeStream(image_stream);*/
                                         // Base64 into byte arrays
                                         byte[] decodedString = Base64.decode(imageEncodedString, Base64.DEFAULT);
                                         // byte array into bitmap
@@ -419,7 +433,12 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         @Override
         protected void onBeforeClusterItemRendered(ClusteredMarker item,
                                                    MarkerOptions markerOptions) {
-            final BitmapDescriptor markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
+            final BitmapDescriptor markerDescriptor;
+            if(item.getProfilePicture() != null){
+                markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
+            } else {
+                markerDescriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE);
+            }
             markerOptions
                     .icon(markerDescriptor)
                     .alpha((float)0.77);

@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,6 +53,7 @@ public class UserProfileActivity extends AppCompatActivity {
     private View mCancelLogout;
     private boolean textVisible;
     private final Context mContext = this;
+    private ProgressBar mProgressBar;
 
     //Varibles for Firebase
     private FirebaseAuth mFirebaseAuth;
@@ -81,7 +83,8 @@ public class UserProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_profile);
-
+        mProgressBar = findViewById(R.id.progressBar2);
+        mProgressBar.setVisibility(View.GONE);
         //Set up picture changing varibles
         File file = new File(Environment.getExternalStorageDirectory(), IMAGE_SRC);
         uriPic = FileProvider.getUriForFile(mContext, "com.frankenstein.frankenstein.fileprovider", file);
@@ -221,6 +224,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
+        Log.d("debug", resultCode + "");
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case CAPTURE_IMAGE:
@@ -259,21 +263,7 @@ public class UserProfileActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         //Listen to for when the user presses the save Button
         if (item.getItemId() == R.id.action_save) {
-            new SavingTask().execute();
-            Toast.makeText(this, "Changes have been saved", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    public class SavingTask extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
+            mProgressBar.setVisibility(View.VISIBLE);
             String username = mFirebaseUser.getUid();
             final DatabaseReference profile = mDatabase.child("users").child(username).child("profile");
             profile.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -300,12 +290,28 @@ public class UserProfileActivity extends AppCompatActivity {
                             }
                         }
                     }
+                    mProgressBar.setVisibility(View.GONE);
+                    Toast.makeText(mContext, "Changes have been saved", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(mContext, MainActivity.class));
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                 }
             });
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public class SavingTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
             return null;
         }
 

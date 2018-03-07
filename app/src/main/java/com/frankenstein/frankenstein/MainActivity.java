@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -90,11 +91,13 @@ public class MainActivity extends AppCompatActivity
     public static final float MIN_DISPLACEMENT_TO_UPDATE_MARKERS = 5;
     public FloatingActionButton fab;
     public static boolean istheToogleforFabOn;
+    public static Bitmap mProfilePicture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FrankensteinPermission.checkPermission(this);
         mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
         mARButton = findViewById(R.id.boombutton_mainAR);
@@ -182,6 +185,7 @@ public class MainActivity extends AppCompatActivity
                             // Uri to Bitmap
                             InputStream image_stream = getContentResolver().openInputStream(Uri.parse(profileUri));
                             Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
+                            mProfilePicture = bitmap;
                             // Bitmap to Base64 String
                             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
@@ -222,6 +226,7 @@ public class MainActivity extends AppCompatActivity
                                         byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
+                                        mProfilePicture = decodedByte;
                                     }
 
                                     else
@@ -271,6 +276,7 @@ public class MainActivity extends AppCompatActivity
                                     byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                     Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                     mImageViewProfilePic.setImageBitmap(decodedByte);
+                                    mProfilePicture = decodedByte;
                                 }
 
                                 else
@@ -315,7 +321,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_gallery) {
-            startActivity(new Intent(this, GalleryTimeline.class));
+            Intent intent1 = new Intent(this, GalleryTimeline.class);
+            intent1.putExtra("origin", 0);
+            startActivity(intent1);
         } else if (id == R.id.nav_setting){
             startActivity(new Intent(this, SettingsActivity.class));
         }
@@ -346,8 +354,8 @@ public class MainActivity extends AppCompatActivity
         else {
             fab.setVisibility(View.INVISIBLE);
         }
-        Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
-        Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
+        Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
+        Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
     }
 
     @Override
@@ -376,7 +384,8 @@ public class MainActivity extends AppCompatActivity
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                Log.d("gb", "Testing");
+                int test = ((int)toDegrees(orientation[0]));
+                Log.d("gb", "Testing "+test);
                 Global.mapFragment.setmAzimuth((float)(toDegrees(orientation[0])+180));
                 if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0 && !istheToogleforFabOn) {
                     Log.d("s1", "Going to map");
@@ -468,6 +477,7 @@ public class MainActivity extends AppCompatActivity
                                 query.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
+                                        mNearbyMarkers = new ArrayList<>();
                                         if (dataSnapshot.hasChildren()){
                                             for (DataSnapshot dss: dataSnapshot.getChildren()){
                                                 String keyPic = dss.child("latitude").getValue(Long.class)
@@ -482,13 +492,18 @@ public class MainActivity extends AppCompatActivity
                                                     GalleryEntry entry = (GalleryEntry) marker.getTag();
                                                     entry.setPicture(encodedImage);
                                                     marker.setTag(entry);
-                                                    Log.d("debug", entry.getSummary());
                                                 }
                                             }
                                         }
-                                        if (!mNearbyMarkers.contains(marker)) mNearbyMarkers.add(marker);
-                                        Log.d("debug", "marker " + mNearbyMarkers.toString());
-
+                                        if (!mNearbyMarkers.contains(marker)) {
+                                            mNearbyMarkers.add(marker);
+                                            String key = ((GalleryEntry)marker.getTag()).getPicture();
+                                            byte[] decodedString = Base64.decode(key, Base64.DEFAULT);
+                                            Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                            BitmapDrawable val = new BitmapDrawable(getResources(), bitmap);
+                                            Global.arFragment.mCustomDrawableView.mARCache.put(key, val);
+                                            Log.d("debug", "marker " + mNearbyMarkers.toString());
+                                        }
                                     }
 
                                     @Override

@@ -42,6 +42,9 @@ public class EditNewEntryActivity extends AppCompatActivity{
     public static Bitmap bitmap;
     public static LatLng location;
     public static Float azimuth;
+    private int origin;
+    private final int FROM_MAP = 0;
+    private final Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +53,7 @@ public class EditNewEntryActivity extends AppCompatActivity{
         Log.d("gb", "In editnew");
         location = getIntent().getParcelableExtra("location");
         azimuth = getIntent().getFloatExtra("azimuth", 0f);
+        origin = getIntent().getIntExtra("origin", FROM_MAP);
         mCameraView = findViewById(R.id.CameraView_newEntry);
         mBoomMenu = findViewById(R.id.boombutton_newEntry);
         mBoomMenu.setBoomEnum(BoomEnum.RANDOM);
@@ -75,25 +79,30 @@ public class EditNewEntryActivity extends AppCompatActivity{
                 case 1:
                     HamButton.Builder builder1 = new HamButton.Builder()
                             .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_current_location)
-                            .normalText("Option 2")
+                            .normalImageRes(R.drawable.ic_back_to_ar)
+                            .normalText("Back to AR")
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Log.d("debug", "Option 2");
+                                    finish();
                                 }
                             });
+                    if (origin == FROM_MAP) {
+                        builder1.unableText("Can't go back to AR if coming from map")
+                                .unable(true)
+                                .unableImageRes(R.drawable.ic_forbidden);
+                    }
                     mBoomMenu.addBuilder(builder1);
                     break;
                 case 2:
                     HamButton.Builder builder2 = new HamButton.Builder()
                             .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_current_location)
-                            .normalText("Option 3")
+                            .normalImageRes(R.drawable.ic_secret)
+                            .normalText("Click Here For A Fun Fact")
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Log.d("debug", "Option 3");
+                                    Toast.makeText(context, "Frankenstein is made up of *** lines!", Toast.LENGTH_SHORT).show();
                                 }
                             });
                     mBoomMenu.addBuilder(builder2);
@@ -120,7 +129,12 @@ public class EditNewEntryActivity extends AppCompatActivity{
                         , "An error has occured, please try again later", Toast.LENGTH_SHORT).show();
                 else if (location == null) Toast.makeText(mContext
                         , "Unable to determine location, Please try again later", Toast.LENGTH_SHORT).show();
-                else startActivity(new Intent(mContext, SaveNewEntryActivity.class));
+                else {
+                    Intent intent = new Intent(mContext, SaveNewEntryActivity.class);
+                    intent.putExtra("origin", origin);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                }
 
             }
         });

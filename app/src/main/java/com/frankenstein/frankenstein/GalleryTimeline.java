@@ -1,5 +1,6 @@
 package com.frankenstein.frankenstein;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,6 +19,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.nightonke.boommenu.Animation.BoomEnum;
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
+import com.nightonke.boommenu.BoomButtons.HamButton;
+import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
+import com.nightonke.boommenu.BoomMenuButton;
+import com.nightonke.boommenu.ButtonEnum;
+import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -27,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GalleryTimeline extends AppCompatActivity {
+    private ArrayList<Marker> mAllEntries;
     private static final String TAG = "GalleryTimeline";
     private int previousLast;
     private ArrayList<Card> list;

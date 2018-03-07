@@ -56,6 +56,8 @@ public class DisplayEntryActivity extends AppCompatActivity {
     private ViewGroup mImageViewContainer;
     private ViewGroup.LayoutParams imageLayout;
     private TextView mEnlargeHint;
+    private int origin;
+    private final int FROM_MAIN = 0;
     boolean expanded = false;
     private final Context mContext = this;
 
@@ -63,7 +65,8 @@ public class DisplayEntryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_entry);
-        if (MapFragment.mCurrentSelection == null) {
+        origin = getIntent().getIntExtra("origin", FROM_MAIN);
+        if (MapFragment.mCurrentSelection == null && origin == FROM_MAIN) {
             Toast.makeText(this, "An Error Occurred", Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -122,7 +125,6 @@ public class DisplayEntryActivity extends AppCompatActivity {
             refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    // TODO: Maybe change to Uri
                     if (dataSnapshot.child("profile").hasChildren()){
                         for (DataSnapshot dssProfile: dataSnapshot.child("profile").getChildren()){
                             String encodedImage = dssProfile.child("profilePicture").getValue(String.class);
@@ -183,11 +185,16 @@ public class DisplayEntryActivity extends AppCompatActivity {
                         HamButton.Builder builder1 = new HamButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_map)
-                                .normalText("Option 2")
+                                .normalText("Back to Gallery Entry")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-
+                                        if (origin == FROM_MAIN){
+                                            startActivity(new Intent(mContext, GalleryTimeline.class));
+                                        }
+                                        else {
+                                            finish();
+                                        }
                                     }
                                 });
                         mBoomButton.addBuilder(builder1);
@@ -195,12 +202,12 @@ public class DisplayEntryActivity extends AppCompatActivity {
                     case 2:
                         HamButton.Builder builder2 = new HamButton.Builder()
                                 .shadowEffect(true)
-                                .normalImageRes(R.drawable.ic_boom_button_map)
-                                .normalText("Option 3")
+                                .normalImageRes(R.drawable.ic_secret)
+                                .normalText("Click Here For A Fun Fact")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-
+                                        Toast.makeText(mContext, "Frankenstein uses only one branch of Github", Toast.LENGTH_SHORT).show();
                                     }
                                 });
                         mBoomButton.addBuilder(builder2);

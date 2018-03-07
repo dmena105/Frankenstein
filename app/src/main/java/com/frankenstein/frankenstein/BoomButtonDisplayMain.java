@@ -3,6 +3,8 @@ package com.frankenstein.frankenstein;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -140,6 +142,7 @@ public class BoomButtonDisplayMain {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCurrentMarker.getPosition());
                                             newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
+                                            newEntry.putExtra("origin", 0);
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -162,6 +165,7 @@ public class BoomButtonDisplayMain {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCustomLocationMarker.getPosition());
                                             newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
+                                            newEntry.putExtra("origin", 0);
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -171,11 +175,24 @@ public class BoomButtonDisplayMain {
                     case 4:
                         TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
-                                .normalImageRes(R.drawable.ic_update_map)
-                                .normalText("Update")
+                                .normalImageRes(R.drawable.ic_zoom_out)
+                                .normalText("Zoom Out To All Posts")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
+                                        if (mAllMarkers.size() == 0){
+                                            Toast.makeText(context, "No posts are available yet, Please try again later"
+                                                    , Toast.LENGTH_SHORT).show();
+                                        }
+                                        else {
+                                            try {
+                                                Marker marker = mAllMarkers.get(0);
+                                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 2));
+                                            } catch (Exception e) {
+                                                Toast.makeText(context, "Loading your post. Please try again later"
+                                                        , Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
                                     }
                                 });
                         mBoomButton.addBuilder(builder4);
@@ -238,6 +255,7 @@ public class BoomButtonDisplayMain {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", Global.mapFragment.mCurrentMarker.getPosition());
                                             newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
+                                            newEntry.putExtra("origin", 1);
                                             context.startActivity(newEntry);
                                         }
                                     }
