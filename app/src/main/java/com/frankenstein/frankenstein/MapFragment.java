@@ -44,6 +44,7 @@ import com.google.android.gms.maps.model.internal.zzp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
@@ -345,7 +346,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                         .child(MainActivity.username);
                 Log.d("debug", refUtil.toString());
-                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                Query query = refUtil.orderByChild("latitude");
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         String imageEncodedString = null;
@@ -417,10 +419,10 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         @Override
         protected void onBeforeClusterItemRendered(ClusteredMarker item,
                                                    MarkerOptions markerOptions) {
-            /*final BitmapDescriptor markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
+            final BitmapDescriptor markerDescriptor = BitmapDescriptorFactory.fromBitmap(item.getProfilePicture());
             markerOptions
                     .icon(markerDescriptor)
-                    .alpha((float)0.77);*/
+                    .alpha((float)0.77);
         }
     }
 }

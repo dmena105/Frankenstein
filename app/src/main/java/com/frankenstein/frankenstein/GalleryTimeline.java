@@ -30,6 +30,7 @@ public class GalleryTimeline extends AppCompatActivity {
     private ListView mListView;
     private CustomListAdapter adapter;
     private int entriesLoaded = 0;
+    private boolean doneLoading = false;
     android.support.v7.widget.Toolbar toolbar;
 
     @Override
@@ -53,61 +54,62 @@ public class GalleryTimeline extends AppCompatActivity {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                switch(view.getId())
-                {
-                    case R.id.GalleryTimeLineListView:
-                        final int lastItem = firstVisibleItem + visibleItemCount;
-                        if(lastItem == totalItemCount)
-                        {
-                            DatabaseReference refUtil = MainActivity.databaseReference.child("users")
-                                    .child(MainActivity.username).child("items");
-                            Query query = refUtil.orderByChild("postTime");
-                            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    if (dataSnapshot.hasChildren()){
-                                        Iterator<DataSnapshot> iterator = dataSnapshot.getChildren().iterator();
-                                        for(int i=0; i<Math.min(entriesLoaded, dataSnapshot.getChildrenCount()); i++){
-                                            iterator.next();
-                                        }
-                                        for (int i=0; i<5; i++){
-                                            if (iterator.hasNext()) {
-                                                DataSnapshot dss = iterator.next();
-                                                adapter.add(new Card(dss.child("picture").getValue(String.class)
-                                                , dss.child("postTime").getValue(Long.class).toString()));
+                if (!doneLoading) {
+                    Log.d("debug", "not done");
+                    switch (view.getId()) {
+                        case R.id.GalleryTimeLineListView:
+                            final int lastItem = firstVisibleItem + visibleItemCount;
+                            if (lastItem == totalItemCount) {
+                                DatabaseReference refUtil = MainActivity.databaseReference.child("users")
+                                        .child(MainActivity.username).child("items");
+                                Query query = refUtil.orderByChild("postTime");
+                                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        if (dataSnapshot.hasChildren()) {
+                                            Iterator<DataSnapshot> iterator = dataSnapshot.getChildren().iterator();
+                                            for (int i = 0; i < Math.min(entriesLoaded, dataSnapshot.getChildrenCount()); i++) {
+                                                iterator.next();
                                             }
+                                            for (int i = 0; i < 5; i++) {
+                                                if (iterator.hasNext()) {
+                                                    Log.d("debug", "onDataChange");
+                                                    DataSnapshot dss = iterator.next();
+                                                    double lat = dss.child("latitude").getValue(Double.class);
+                                                    double lng = dss.child("longitude").getValue(Double.class);
+                                                    String picKey = lat + "-" + lng;
+                                                    String encodedImage;
+                                                    if (MapFragment.mPictureCache.containsKey(picKey)){
+                                                        encodedImage = MapFragment.mPictureCache.get(picKey);
+                                                    }
+                                                    else {
+                                                        encodedImage = dss.child("picture").getValue(String.class);
+                                                    }
+                                                    DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
+                                                    Calendar calendar = Calendar.getInstance();
+                                                    calendar.setTimeInMillis(dss.child("postTime").getValue(Long.class));
+                                                    adapter.add(new Card(encodedImage, formatter.format(calendar.getTime())));
+                                                } else doneLoading = true;
+                                            }
+                                            entriesLoaded += 5;
                                         }
-
-                                        entriesLoaded+=5;
-
                                     }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+                                    }
+                                });
+
+                                if (previousLast != lastItem) {
+                                    //to avoid multiple calls for last item
+                                    Log.d("debug", "Last");
+                                    previousLast = lastItem;
                                 }
-
-                                @Override
-                                public void onCancelled(DatabaseError databaseError) {}
-                            });
-
-                            if(previousLast != lastItem)
-                            {
-                                //to avoid multiple calls for last item
-                                Log.d("debug", "Last");
-                                previousLast = lastItem;
                             }
-                        }
+                    }
                 }
             }
         });
-
-        DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
-        Calendar calendar = Calendar.getInstance();
-        for (Marker marker: mAllEntries){
-            GalleryEntry entry = (GalleryEntry) marker.getTag();
-            calendar.setTimeInMillis(entry.getPostTime());
-            String postTime = formatter.format(calendar.getTime());
-            String postSummary = entry.getSummary();
-            double lat = entry.getLatitude();
-            double lng = entry.getLongitude();
-        }
     }
 
     @Override

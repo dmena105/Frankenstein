@@ -13,6 +13,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.AsyncTask;
@@ -40,6 +41,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -48,11 +50,13 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.nightonke.boommenu.BoomMenuButton;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.microedition.khronos.opengles.GL;
@@ -79,7 +83,11 @@ public class MainActivity extends AppCompatActivity
     private Messenger mapFragmentMessenger;
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
-
+    public static ArrayList<Marker> mNearbyMarkers;
+    private LatLng previousLocation;
+    private boolean firstTimeLoaded = false;
+    public static final float MAX_DISTANCE_FOR_AR_DISPLAY = 15;
+    public static final float MIN_DISPLACEMENT_TO_UPDATE_MARKERS = 3;
     public FloatingActionButton fab;
     public static boolean istheToogleforFabOn;
 
@@ -127,7 +135,7 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-
+        mNearbyMarkers = new ArrayList<>();
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -404,6 +412,18 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private static boolean markerIsNearby(LatLng markerLoc, LatLng currLoc){
+        float[] result = new float[5];
+        Location.distanceBetween(currLoc.latitude, currLoc.longitude, markerLoc.latitude, markerLoc.longitude, result);
+        return result[0] < MAX_DISTANCE_FOR_AR_DISPLAY;
+    }
+
+    private static boolean timeToUpdateARMarkers(LatLng previousLoc, LatLng currLoc){
+        float[] result = new float[5];
+        Location.distanceBetween(currLoc.latitude, currLoc.longitude, previousLoc.latitude, currLoc.longitude, result);
+        return result[0] > MIN_DISPLACEMENT_TO_UPDATE_MARKERS;
+    }
+
     @Override
     public void onServiceDisconnected(ComponentName name){
         trackingServiceMessenger = null;
@@ -431,6 +451,39 @@ public class MainActivity extends AppCompatActivity
                                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
                         if (MapFragment.boomDisplay != null) MapFragment.boomDisplay.setCurrentMarker(MapFragment.mCurrentMarker);
                     }
+                    Log.d("debug", "before the update");
+                    if (Global.arFragment.isVisible() && MapFragment.mAllMarkers != null
+                            && (!firstTimeLoaded || timeToUpdateARMarkers(previousLocation, currLoc))){
+                        Log.d("debug", "updating AR view");
+                        firstTimeLoaded = true;
+                        DatabaseReference refUtil = databaseReference.child("users").child(username)
+                                .child("items");
+                        for (final Marker marker: MapFragment.mAllMarkers){
+                            if (markerIsNearby(marker.getPosition(), currLoc)) {
+                                Query query = refUtil.orderByChild("latitude");
+                                query.equalTo(marker.getPosition().latitude);
+                                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        if (dataSnapshot.hasChildren()){
+                                            for (DataSnapshot dss: dataSnapshot.getChildren()){
+                                                String encodedImage = dss.child("picture").getValue(String.class);
+                                                GalleryEntry entry = (GalleryEntry) marker.getTag();
+                                                entry.setPicture(encodedImage);
+                                                marker.setTag(entry);
+                                            }
+                                        }
+                                        mNearbyMarkers.add(marker);
+                                        Log.d("debug", "size " + mNearbyMarkers.toString());
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {}
+                                });
+                            }
+                        }
+                    }
+                    previousLocation = currLoc;
             }
         }
     }

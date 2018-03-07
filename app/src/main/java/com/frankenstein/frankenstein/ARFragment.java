@@ -31,6 +31,11 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.nightonke.boommenu.Animation.BoomEnum;
 import com.nightonke.boommenu.BoomButtons.BoomButtonBuilder;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
@@ -158,6 +163,7 @@ public class ARFragment extends android.app.Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

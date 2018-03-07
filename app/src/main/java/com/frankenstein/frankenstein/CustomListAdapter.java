@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.cache.disc.naming.HashCodeFileNameGenerator;
 import com.nostra13.universalimageloader.cache.memory.impl.WeakMemoryCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -23,6 +24,7 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
 import java.io.ByteArrayOutputStream;
@@ -105,7 +107,8 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
             //Create Display Options
             DisplayImageOptions options = new DisplayImageOptions.Builder()
                     .cacheInMemory(true)
-                    .cacheOnDisc(true).resetViewBeforeLoading(true)
+                    .cacheOnDisc(true)
+                    .resetViewBeforeLoading(true)
                     .showImageForEmptyUri(defaultImage)
                     .showImageOnFail(defaultImage)
                     .showImageOnLoading(defaultImage).build();
@@ -144,7 +147,7 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
 
     public String getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        inImage.compress(Bitmap.CompressFormat.JPEG, 0, bytes);
         return MediaStore.Images.Media.insertImage(inContext.getContentResolver(),
                 inImage, "Title", null);
     }
