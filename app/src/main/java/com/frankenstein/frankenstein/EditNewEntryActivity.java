@@ -106,7 +106,7 @@ public class EditNewEntryActivity extends AppCompatActivity{
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Toast.makeText(context, "Frankenstein is made up of *** lines!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(context, "Frankenstein is made up of 3998 lines!", Toast.LENGTH_SHORT).show();
                                 }
                             });
                     mBoomMenu.addBuilder(builder2);

@@ -156,7 +156,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Toast.makeText(mContext, "Frankenstein is made up of *** classes!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(mContext, "Frankenstein is made up of 22 classes!", Toast.LENGTH_SHORT).show();
                                 }
                             });
                     mBoomMenu.addBuilder(builder2);

@@ -78,7 +78,7 @@ public class TrackingService extends Service {
         }
     }
 
-    // Thread for updating location. 
+    // Thread for updating location.
     class LocationTracker extends Thread{
         Handler handler = new Handler();
         Runnable tracker = new Runnable() {
