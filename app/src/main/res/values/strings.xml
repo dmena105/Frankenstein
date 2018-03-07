@@ -21,7 +21,7 @@
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
 
-    <string name="pref_title_social_recommendations">Enable Automatic Sensor Switch</string>
+    <string name="pref_title_social_recommendations">Disable Automatic Sensor Switch</string>
     <string name="pref_description_social_recommendations">
         Turn off/on the sensors that automatically switch between AR and Map View.
     </string>

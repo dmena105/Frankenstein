@@ -29,6 +29,7 @@ public class DisplayObject {
     int width;
     int height;
 
+    //Blank constructor for portability
     public DisplayObject(){
     }
 
@@ -43,21 +44,27 @@ public class DisplayObject {
     }
 
     public Rect getCurrentBound(Float azimuth, double pitch, double poslat, double poslng, double objlat, double objlng){
+        //Get distance in meters
         float[] mdistance = new float[3];
         Location.distanceBetween(poslat, poslng, objlat, objlng, mdistance);
         float distance = abs(mdistance[0]);
         Log.d("gb3", "distance = "+distance);
+        //Don't show objects too far away
         if(distance > 100 || distance < 0){
             return null;
         }
+        //Scale the object linearly with distance. Will replace with log scale if time
+        //(inacurate, but feels better)
         float scale = 1.0f/mdistance[0];
         if(scale > 2)
             scale = 1f;
-        //The object is only visible if it's within 90 degrees of the camera
+        //The object is only visible if it's within 90 degrees of the camera. For close objects,
+        // use actual azimuth
         float fract;
         if(distance < 5) {
             fract = Global.angleDist(azimuth, this.centerAngles[0]) / (float) log(1 + scale);
         } else {
+            //For far ones, use direction to object. Objects should turn to face you in the distance
             Location start = new Location("");
             start.setLatitude(objlat);
             start.setLongitude(objlng);
@@ -69,17 +76,19 @@ public class DisplayObject {
         if(abs(fract) > 90){
             return null;
         }
+        //Move horizontal center
         int centerX = (int)(this.centerX+sin(Math.toRadians(fract))*width);
         Log.d("gb3", "sin = "+sin(Math.toRadians(fract))+" Angle "+fract);
         float offVertical = Global.angleDist((float)pitch, this.centerAngles[1]);
         int centerY;
-        //Check if your within 90 degrees of the
+        //Check if your within 90 degrees of the vertical
         if(abs(offVertical) < 90){
             offVertical = Math.max(0, offVertical-30);
             centerY = (int)(this.centerY- height*sin(Math.toRadians(offVertical)));
         } else {
             return null;
         }
+        //Calculate the bounds
         int left = centerX - (int)(scale*spanX/2);
         int right = centerX + (int)(scale*spanX/2);
         int top = centerY - (int)(scale*spanY/2);
@@ -97,21 +106,5 @@ public class DisplayObject {
     public void setImage(Drawable image){
         Log.d("gb30", "Image set!");
         this.image = image;
-    }
-
-    private double meterDistanceBetweenPoints(float lat_a, float lng_a, float lat_b, float lng_b) {
-        float pk = (float) (180.f/Math.PI);
-
-        float a1 = lat_a / pk;
-        float a2 = lng_a / pk;
-        float b1 = lat_b / pk;
-        float b2 = lng_b / pk;
-
-        double t1 = Math.cos(a1) * Math.cos(a2) * Math.cos(b1) * Math.cos(b2);
-        double t2 = Math.cos(a1) * Math.sin(a2) * Math.cos(b1) * Math.sin(b2);
-        double t3 = Math.sin(a1) * Math.sin(b1);
-        double tt = Math.acos(t1 + t2 + t3);
-
-        return 6366000 * tt;
     }
 }

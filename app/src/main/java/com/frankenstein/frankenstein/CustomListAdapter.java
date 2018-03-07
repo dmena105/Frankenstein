@@ -35,7 +35,7 @@ import java.util.ArrayList;
 /**
  * Created by davidmena on 2/24/18.
  *
- *
+ * This class is used by Gallery Timeline and it helps display our photos in the listview
  */
 
 public class CustomListAdapter extends ArrayAdapter<Card>{
@@ -53,6 +53,7 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
         ImageView image;
     }
 
+    //Constructor that takes a list of card items
     public CustomListAdapter(Context context, int resource, ArrayList<Card> arrayList) {
         super(context, resource, arrayList);
         mContext = context;

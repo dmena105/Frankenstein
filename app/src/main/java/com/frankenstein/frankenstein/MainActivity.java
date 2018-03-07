@@ -387,26 +387,28 @@ public class MainActivity extends AppCompatActivity
     float[] mGeomagnetic;
     @Override
     public void onSensorChanged(SensorEvent event) {
+        //Get accelerometer data from photo, and pass it to our filters
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
             mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
             mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
         if (mGravity != null && mGeomagnetic != null) {
+            //Calculate orientation
             float R[] = new float[9];
             float I[] = new float[9];
             boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                int test = ((int)toDegrees(orientation[0]));
-                Log.d("gb", "Testing "+test);
                 Global.mapFragment.setmAzimuth((float)(toDegrees(orientation[0])+180));
+                //Choose map mode and pass data to AR if needed.
                 if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0 && !istheToogleforFabOn) {
                     Log.d("s1", "Going to map");
                     getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
                     mode = 1;
                     mARButton.setVisibility(View.GONE);
                     mMapButton.setVisibility(View.VISIBLE);
+                    //Change to AR view
                 } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1 && !istheToogleforFabOn) {
                     Log.d("s1", "Going to ar");
                     getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
@@ -414,6 +416,7 @@ public class MainActivity extends AppCompatActivity
                     mode = 0;
                     mARButton.setVisibility(View.VISIBLE);
                     mMapButton.setVisibility(View.GONE);
+                    //Update the AR view
                 } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 0) {
                     Log.d("s1", "updating ar");
                     Global.arFragment.onSensorChanged(orientation);
@@ -459,7 +462,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     class MainActivityMessageHandler extends Handler {
-        // Handing messages from Tracking Service
+        //Getting and handling messages from the Location Tracking Service
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){

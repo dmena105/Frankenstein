@@ -25,6 +25,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 
+/**
+ * Created by davidmena on 2/25/18.
+ *
+ * The Gallery Time line allows user to see all photos with out having to be in
+ * Map view or AR view
+ */
+
 public class GalleryTimeline extends AppCompatActivity {
     private static final String TAG = "GalleryTimeline";
     private int previousLast;
@@ -52,7 +59,7 @@ public class GalleryTimeline extends AppCompatActivity {
         toolbar = (android.support.v7.widget.Toolbar)findViewById(R.id.toolbarForGalleryTimeline);
         setSupportActionBar(toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.white));
-
+        //Set the adapter and onscroll listener
         adapter = new CustomListAdapter(this, R.layout.activity_gallery_timeline, list);
         mListView.setAdapter(adapter);
         mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
@@ -67,6 +74,7 @@ public class GalleryTimeline extends AppCompatActivity {
                         case R.id.GalleryTimeLineListView:
                             final int lastItem = firstVisibleItem + visibleItemCount;
                             if (lastItem == totalItemCount) {
+                                //Databse Instance
                                 DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                                         .child(MainActivity.username).child("items");
                                 Query query = refUtil.orderByChild("postTime");
@@ -82,10 +90,14 @@ public class GalleryTimeline extends AppCompatActivity {
                                                 if (iterator.hasNext()) {
                                                     Log.d("debug", "onDataChange");
                                                     DataSnapshot dss = iterator.next();
+                                                    //Get the key from firebase
                                                     double lat = dss.child("latitude").getValue(Double.class);
                                                     double lng = dss.child("longitude").getValue(Double.class);
                                                     String picKey = lat + "-" + lng;
+                                                    //Add the key to a list of keys
                                                     keyList.add(picKey);
+                                                    //get the encoded image either from map cache or from
+                                                    //online firebase, then add it to a list of photos
                                                     String encodedImage;
                                                     if (MapFragment.mPictureCache.containsKey(picKey)){
                                                         encodedImage = MapFragment.mPictureCache.get(picKey);
@@ -95,6 +107,7 @@ public class GalleryTimeline extends AppCompatActivity {
                                                         encodedImage = dss.child("picture").getValue(String.class);
                                                         encodedImageList.add(encodedImage);
                                                     }
+                                                    //Get Date and display it with the photo
                                                     DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
                                                     Calendar calendar = Calendar.getInstance();
                                                     calendar.setTimeInMillis(dss.child("postTime").getValue(Long.class));
@@ -120,18 +133,19 @@ public class GalleryTimeline extends AppCompatActivity {
                 }
             }
         });
-
+        //Listerner for when user clicks on an item
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String selectedKey = keyList.get(position);
+                //List all the markers in the map
                 ArrayList<Marker> list = MapFragment.mAllMarkers;
-
                 for (int i = 0; i < list.size(); i++){
+                    //Get get from one of the markers
                     Double lat = list.get(i).getPosition().latitude;
                     Double lng = list.get(i).getPosition().longitude;
                     String madeKey = lat + "-" + lng;
-                    //Check that the key matches with the location
+                    //Check that the key matches with the clicked item
                     if (selectedKey.equals(madeKey)){
                         MapFragment.mCurrentSelection = (GalleryEntry) list.get(i).getTag();
                         MapFragment.mCurrentSelection.setPicture(encodedImageList.get(position));
