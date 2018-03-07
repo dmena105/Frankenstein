@@ -373,6 +373,7 @@ public class MainActivity extends AppCompatActivity
     float[] mGeomagnetic;
     @Override
     public void onSensorChanged(SensorEvent event) {
+        //Get accelerometer data from photo, and pass it to our filters
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
             mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
@@ -393,6 +394,7 @@ public class MainActivity extends AppCompatActivity
                     mode = 1;
                     mARButton.setVisibility(View.GONE);
                     mMapButton.setVisibility(View.VISIBLE);
+                    //Change to AR view
                 } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1 && !istheToogleforFabOn) {
                     Log.d("s1", "Going to ar");
                     getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
@@ -400,6 +402,7 @@ public class MainActivity extends AppCompatActivity
                     mode = 0;
                     mARButton.setVisibility(View.VISIBLE);
                     mMapButton.setVisibility(View.GONE);
+                    //Update the AR view
                 } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 0) {
                     Log.d("s1", "updating ar");
                     Global.arFragment.onSensorChanged(orientation);
@@ -442,6 +445,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     class MainActivityMessageHandler extends Handler {
+        //Getting and handling messages from the Location Tracking Service
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){
