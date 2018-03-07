@@ -8,15 +8,15 @@ import java.sql.Blob;
  */
 
 public class GalleryEntry {
-    private long entryId;
-    private String userEmail;
-    private long postTime;
-    private float azimuth;
-    private double latitude;
-    private double longitude;
-    private String postText;
-    private String picture;
-    private String summary;
+    private long entryId;       // ID number
+    private String userEmail;   // email address of the user
+    private long postTime;      // time the posts are posted
+    private float azimuth;      // Azimuth for the AR fragment
+    private double latitude;    // latitude of the post
+    private double longitude;   // longitude of the post
+    private String postText;    // The main text of a post
+    private String picture;     // The picture encoded by Base64
+    private String summary;     // The summary of a post
 
     public GalleryEntry(){
         entryId = -1;

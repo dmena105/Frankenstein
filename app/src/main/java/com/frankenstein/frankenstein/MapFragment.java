@@ -90,6 +90,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private final Context mContext = getActivity();
     private float mAzimuth;
 
+    // Getters and setters for azimuth
     public void setmAzimuth(float azimuth){
         mAzimuth = azimuth;
         Log.d("gb", "Map's azimuth = "+azimuth);
@@ -99,6 +100,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         return mAzimuth;
     }
 
+    // Helper method for LatLng
     public double[] getLatLng(){
         double[] ret = new double[2];
         if(mCurrentMarker != null){
@@ -122,6 +124,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainMap);
+        // Initializing variables
         setRetainInstance(true);
         mMapView = view.findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -176,18 +179,24 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mapIsReady = true;
+        // initializing cluster manager
         mClusterManager = new ClusterManager<>(getActivity(), mMap);
         mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<ClusteredMarker>() {
             @Override
             public boolean onClusterItemClick(final ClusteredMarker clusteredMarker) {
+                // Referencing the current selected marker
                 mCurrentSelection = clusteredMarker.getGalleryEntry();
+                // Remember the zoom level and the camera location
                 mZoomLevel = mMap.getCameraPosition().zoom;
                 mPreviousLocation = mMap.getCameraPosition().target;
+                // Adjust the camera to best fit the info window
                 LatLng mLoc = new LatLng(mCurrentSelection.getLatitude(), mCurrentSelection.getLongitude());
                 double lat = mLoc.latitude + 0.0065;
                 LatLng cameraLocation = new LatLng(lat, mLoc.longitude);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cameraLocation, 15));
+                // Generate a key for the picture
                 String posKey = clusteredMarker.getPosition().latitude + "_" + clusteredMarker.getPosition().longitude;
+                // If the picture is not in the cache, retrieve from firebase
                 if (!mPictureCache.containsKey(posKey)) {
                     final DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                             .child(MainActivity.username).child("items");
@@ -201,6 +210,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                                         String encodedImage = dss.child("picture").getValue(String.class);
                                         mCurrentSelection.setPicture(encodedImage);
                                         String posKey = clusteredMarker.getPosition().latitude + "_" + clusteredMarker.getPosition().longitude;
+                                        // Place it in the cache after downloading
                                         mPictureCache.put(posKey, encodedImage);
                                         break;
                                     }
@@ -214,7 +224,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                         }
                     });
                 }
-                else {
+                else {  // If the picture is in the cache, get it from the cache
                     mCurrentSelection.setPicture(mPictureCache.get(posKey));
                     displayMarker(clusteredMarker);
                 }
@@ -225,6 +235,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         mClusterManager.setOnClusterClickListener(new ClusterManager.OnClusterClickListener<ClusteredMarker>() {
             @Override
             public boolean onClusterClick(Cluster<ClusteredMarker> cluster) {
+                // When clicked on the cluster marker, zoom in to spread out the markers
                 if (cluster.getSize() < 5)
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(cluster.getPosition(), 16));
                 else if (cluster.getSize() < 10)
@@ -236,18 +247,21 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         });
         mMap.setOnMarkerClickListener(mClusterManager);
         mMap.setOnCameraIdleListener(mClusterManager);
+        // Customize renderers
         MarkerRenderer renderer = new MarkerRenderer(getActivity(), mMap);
         mClusterManager.setRenderer(renderer);
-
+        // Override the info window adapter
         mClusterManager.getMarkerCollection().setOnInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             public View getInfoWindow(Marker marker) {
+                // Only customize the info window the there is a marker selected
                 if (mCurrentSelection != null){
                     View window = getLayoutInflater().inflate(R.layout.post_snapshot_popup_window, null);
                     mImageViewDialog = window.findViewById(R.id.imageView_dialog);
                     mTextViewTime = window.findViewById(R.id.textView_dialogTime);
                     mTextViewSummary = window.findViewById(R.id.textView_dialogSummary);
                     if (mCurrentSelection.getPicture() != null) {
+                        // Decode the image string
                         byte[] decodedString = Base64.decode(mCurrentSelection.getPicture(), Base64.DEFAULT);
                         Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                         mImageViewDialog.setImageBitmap(decodedBitmap);
@@ -255,6 +269,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                     else {
                         mImageViewDialog.setImageResource(R.drawable.ic_signup_image_placeholder);
                     }
+                    // Format date
                     DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTimeInMillis(mCurrentSelection.getPostTime());
@@ -272,6 +287,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         });
         mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
 
+        // long click listner starting new activity
         mMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
             @Override
             public void onInfoWindowLongClick(Marker marker) {
@@ -286,6 +302,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
 
             }
         });
+        // When closing an infowindow, return to original zoom level and camera position, and clear the references
         mMap.setOnInfoWindowCloseListener(new GoogleMap.OnInfoWindowCloseListener() {
             @Override
             public void onInfoWindowClose(Marker marker) {
@@ -295,6 +312,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
             }
         });
 
+        // adding a new custom marker on the map
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
@@ -309,6 +327,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 if (boomDisplay != null) boomDisplay.setCustomLocationMarker(mCustomLocationMarker);
             }
         });
+        // Remove the custom marker
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
@@ -319,10 +338,12 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 }
             }
         });
+        // Setup the display of the boom menu button
         boomDisplay = new BoomButtonDisplayMain(mBoomButton, getActivity()
                 , mMap, mCurrentMarker, mAllMarkers, mCurrentMarkerSelected, mCustomLocationMarker, mAzimuth);
         boomDisplay.mapFragmentDisplay();
         Log.d("debug", "Map is ready");
+        // Getting last known location
         LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -341,7 +362,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         new LoadFromCloud().start();
     }
 
-
+    // Helper method for displaying marker
     private void displayMarker(ClusteredMarker clusteredMarker){
         for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
             if (marker.getPosition().latitude == clusteredMarker.getPosition().latitude &&
@@ -355,6 +376,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         }
     }
 
+    // Thread for loading all posts from firebase (no picture)
     public class LoadFromCloud extends Thread{
         Handler handler = new Handler();
         Runnable loadFromCloud = new Runnable() {
@@ -387,6 +409,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                             }
                         }
                         try {
+                            // Loading everything besides picture, and set Tag to the marker
                             if (dataSnapshot.child("items").hasChildren()) {
                                 for (DataSnapshot dss : dataSnapshot.child("items").getChildren()) {
                                     double lat = dss.child("latitude").getValue(Double.class);
@@ -424,6 +447,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
         }
     }
 
+    // Custom markerRenderer class to display profile pic as markers on the map
     class MarkerRenderer extends DefaultClusterRenderer<ClusteredMarker>{
         private final Context mContext;
         public MarkerRenderer(Context context, GoogleMap map) {

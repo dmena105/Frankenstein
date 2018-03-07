@@ -45,6 +45,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_save_new_entry);
+        // Setting up the variables
         origin = getIntent().getIntExtra("origin", FROM_MAP);
         mImagePreview = findViewById(R.id.imageView_newEntry);
         mSummaryText = findViewById(R.id.EditText_summary_newEntry);
@@ -56,17 +57,20 @@ public class SaveNewEntryActivity extends AppCompatActivity {
         mSaveEntry = findViewById(R.id.button_save_newEntry);
         mImagePreview.setImageBitmap(mImage);
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        // listener for saving entries
         mSaveEntry.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Runnable saveToDatabase = new Runnable() {
                     @Override
                     public void run() {
+                        // Translate to Base 64 string and save to firebase
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         mImage.compress(Bitmap.CompressFormat.JPEG, 50, baos);
                         byte[] imageByteArray = baos.toByteArray();
                         String encodedImage = Base64.encodeToString(imageByteArray, Base64.DEFAULT);
                         String summaryText = mSummaryText.getText().toString();
+                        // Summary text cannot be null, and it cannot be longer than 30 characters
                         if (summaryText.length() > 30){
                             summaryText = summaryText.substring(0, 26) + "...";
                         }
@@ -78,6 +82,7 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                             else
                                 summaryText = mPostText.getText().toString();
                         }
+                        // Updating firebase
                         DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                                 .child(MainActivity.username).child("items").push();
                         refUtil.child("entryId").getRef().setValue(MainActivity.itemcount);
@@ -103,10 +108,12 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                 startActivity(new Intent(mContext, MainActivity.class));
             }
         });
+        // Setting up the boom menu button
         mBoomMenu.setButtonPlaceEnum(ButtonPlaceEnum.HAM_3);
         mBoomMenu.setPiecePlaceEnum(PiecePlaceEnum.HAM_3);
         mBoomMenu.setBoomEnum(BoomEnum.RANDOM);
         mBoomMenu.setButtonEnum(ButtonEnum.Ham);
+        // All builders
         for (int i=0; i<mBoomMenu.getPiecePlaceEnum().pieceNumber(); i++){
             switch(i){
                 case 0:

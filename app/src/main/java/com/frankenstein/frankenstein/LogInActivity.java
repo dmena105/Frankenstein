@@ -51,9 +51,11 @@ public class LogInActivity extends AppCompatActivity {
         mLogInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Getting email and password from text fields
                 final String email = mUsernameText.getText().toString().trim();
                 String password = mPasswordText.getText().toString().trim();
                 if (email.isEmpty() || password.isEmpty()){
+                    // dialogs for invalid entries
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
                             .setTitle("Invalid entry")
                             .setMessage("Please enter your username or password")
@@ -67,12 +69,14 @@ public class LogInActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(Task<AuthResult> task) {
                                     if (task.isSuccessful()){
+                                        // Start main Activity
                                         Intent intent = new Intent(mContext, MainActivity.class);
                                         intent.putExtra("mode", 1);
                                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                         startActivity(intent);
                                     }
                                     else {
+                                        // Show error dialog
                                         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
                                         builder.setTitle("Sign in Error")
                                                 .setMessage(task.getException().getMessage())

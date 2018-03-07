@@ -97,7 +97,9 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Setting permission
         FrankensteinPermission.checkPermission(this);
+        // Initializing variables
         mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
         mARButton = findViewById(R.id.boombutton_mainAR);
@@ -105,6 +107,7 @@ public class MainActivity extends AppCompatActivity
         databaseReference = FirebaseDatabase.getInstance().getReference();
         username = mFirebaseUser.getUid();
         //Log.d("debug", "username: " + username);
+        // Getting sensor services from syste,
         Global.mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         Global.accelerometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Global.magnetometer = Global.mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -115,8 +118,10 @@ public class MainActivity extends AppCompatActivity
         Global.mapFragment = new com.frankenstein.frankenstein.MapFragment();
         Global.mapFragment.setRetainInstance(true);
         getFragmentManager().beginTransaction().replace(R.id.main_frame, Global.mapFragment).commit();
+        // Setup the boom buttons
         mARButton.setVisibility(View.GONE);
         mMapButton.setVisibility(View.VISIBLE);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -124,6 +129,7 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         istheToogleforFabOn = sp.getBoolean("automatic_switch", true);
 
+        // Set up the fab button for switching between map fragments and AR fragments
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -143,6 +149,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
         mNearbyMarkers = new ArrayList<>();
+        // Setting up drawer view
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -168,7 +175,7 @@ public class MainActivity extends AppCompatActivity
         mTextViewNickname = v.findViewById(R.id.textView_mainDrawer_nickname);
         // 0 is sign up activity, 1 is sign-in activity, 2 = the user has already logged in
         int mode = getIntent().getIntExtra("mode", 1);
-        if (mode == 0){
+        if (mode == 0){     // Coming from signup activity
             nickname = getIntent().getStringExtra("nickname");
             profileUri = getIntent().getStringExtra("profile");
             final DatabaseReference refUtil = databaseReference.child("users")
@@ -181,7 +188,7 @@ public class MainActivity extends AppCompatActivity
                 Thread saveProfilePic = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
+                        try {   // Save profile picture to firebase
                             // Uri to Bitmap
                             InputStream image_stream = getContentResolver().openInputStream(Uri.parse(profileUri));
                             Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
@@ -211,6 +218,7 @@ public class MainActivity extends AppCompatActivity
             Thread loadProfile = new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    // Retrieving profile picture from firebase
                     DatabaseReference refUtil = databaseReference.child("users").child(username);
                     refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -230,7 +238,7 @@ public class MainActivity extends AppCompatActivity
                                     }
 
                                     else
-                                        mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                                        mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);  // Default image if firebase failed to load
                                     if (nickname != null) {
                                         mTextViewNickname.setText(nickname);
                                     }
@@ -248,6 +256,7 @@ public class MainActivity extends AppCompatActivity
             loadProfile.start();
 
         }
+        // Start tracking service
         Intent trackIntent = new Intent(this, TrackingService.class);
         mApplicationContext.startService(trackIntent);
         mApplicationContext.bindService(trackIntent, this, Context.BIND_AUTO_CREATE);
@@ -258,6 +267,7 @@ public class MainActivity extends AppCompatActivity
     protected void onPostResume() {
         super.onPostResume();
         Log.d(TAG, "OnPostResume");
+        // Retrieving profile picture when returning to main activity
         Thread loadProfile = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -273,6 +283,7 @@ public class MainActivity extends AppCompatActivity
                                 String nickname = dss.child("username").getValue(String.class);
                                 String encodedImage = dss.child("profilePicture").getValue(String.class);
                                 if (encodedImage != null) {
+                                    // Decode string if it exists
                                     byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                     Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                     mImageViewProfilePic.setImageBitmap(decodedByte);
@@ -280,7 +291,7 @@ public class MainActivity extends AppCompatActivity
                                 }
 
                                 else
-                                    mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);
+                                    mImageViewProfilePic.setImageResource(R.drawable.ic_signup_image_placeholder);  // Default placeholder
                                 if (nickname != null) {
                                     mTextViewNickname.setText(nickname);
                                 }
@@ -300,6 +311,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        // Overriding back pressed
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -321,10 +333,12 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_gallery) {
+            // start GalleryTimeline activity
             Intent intent1 = new Intent(this, GalleryTimeline.class);
             intent1.putExtra("origin", 0);
             startActivity(intent1);
         } else if (id == R.id.nav_setting){
+            // Start Setting activity
             startActivity(new Intent(this, SettingsActivity.class));
         }
 
@@ -424,12 +438,15 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    // Helper method for determining if there is marker nearby-->AR Fragment
     private static boolean markerIsNearby(LatLng markerLoc, LatLng currLoc){
         float[] result = new float[5];
         Location.distanceBetween(currLoc.latitude, currLoc.longitude, markerLoc.latitude, markerLoc.longitude, result);
         return result[0] < MAX_DISTANCE_FOR_AR_DISPLAY;
     }
 
+    // Helper method for determining if it is time for AR fragment to update
+    // its list of nearby markers
     private static boolean timeToUpdateARMarkers(LatLng previousLoc, LatLng currLoc){
         float[] result = new float[5];
         Location.distanceBetween(currLoc.latitude, currLoc.longitude, previousLoc.latitude, currLoc.longitude, result);
@@ -442,27 +459,31 @@ public class MainActivity extends AppCompatActivity
     }
 
     class MainActivityMessageHandler extends Handler {
+        // Handing messages from Tracking Service
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){
                 case TrackingService.UPDATE_LOCATION:
+                        // Getting and parsing information
                         Bundle bundle = msg.getData();
                         String[] locInfo = bundle.getString(TrackingService.LOCATION_KEY).split(" ");
                         LatLng currLoc = new LatLng(Double.parseDouble(locInfo[0]),
                                 Double.parseDouble(locInfo[1]));
                         Float azimuth = Float.parseFloat(locInfo[2]);
                         azimuth = (float)toDegrees(azimuth)+180;
-                    if (MapFragment.mapIsReady){
+                    if (MapFragment.mapIsReady){ // If map Fragment is active
                         if (MapFragment.mCurrentMarker != null) {
                             MapFragment.mCurrentMarker.remove();
                         }
-                        // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
+                        // update mCurrentMarker in MapFragment
                         MapFragment.mCurrentMarker = MapFragment.mMap.addMarker(new MarkerOptions()
                                 .snippet("Current Location")
                                 .position(currLoc)
                                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
+                        // Update parameters in boom menu button display
                         if (MapFragment.boomDisplay != null) MapFragment.boomDisplay.setCurrentMarker(MapFragment.mCurrentMarker);
                     }
+                    // Will evaluate to true if it is time to update AR Fragment nearby markers
                     if (Global.arFragment.isVisible() && MapFragment.mAllMarkers != null
                             && (!firstTimeLoaded || timeToUpdateARMarkers(previousLocation, currLoc))){
                         Log.d("debug", "updating AR view");
@@ -470,6 +491,7 @@ public class MainActivity extends AppCompatActivity
                         DatabaseReference refUtil = databaseReference.child("users").child(username)
                                 .child("items");
                         for (final Marker marker: MapFragment.mAllMarkers){
+                            // Check for markers nearby
                             if (markerIsNearby(marker.getPosition(), currLoc)) {
                                 Log.d("debug", "There are markers nearby");
                                 Query query = refUtil.orderByChild("latitude");
@@ -483,6 +505,7 @@ public class MainActivity extends AppCompatActivity
                                                 String keyPic = dss.child("latitude").getValue(Long.class)
                                                         + "_" + dss.child("longitude").getValue(Long.class);
                                                 String encodedImage = null;
+                                                // Retrieve from cache if already downloaded
                                                 if (!MapFragment.mPictureCache.containsKey(keyPic)) {
                                                     encodedImage = dss.child("picture").getValue(String.class);
                                                     MapFragment.mPictureCache.put(keyPic, encodedImage);
@@ -498,6 +521,8 @@ public class MainActivity extends AppCompatActivity
                                         if (!mNearbyMarkers.contains(marker)) {
                                             mNearbyMarkers.add(marker);
                                             String key = ((GalleryEntry)marker.getTag()).getPicture();
+                                            // Decode the Base 64 string here to store the actual bitmap in
+                                            // a cache
                                             byte[] decodedString = Base64.decode(key, Base64.DEFAULT);
                                             Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                             BitmapDrawable val = new BitmapDrawable(getResources(), bitmap);
@@ -511,7 +536,7 @@ public class MainActivity extends AppCompatActivity
                                 });
                             }
                         }
-                    }
+                    }// Update previous location
                     previousLocation = currLoc;
             }
         }
