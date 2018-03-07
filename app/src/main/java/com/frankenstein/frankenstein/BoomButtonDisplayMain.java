@@ -218,11 +218,11 @@ public class BoomButtonDisplayMain {
                         TextOutsideCircleButton.Builder builder0 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_current_location)
-                                .normalText("Option 1")
+                                .normalText("Demo Mode")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-
+                                        Global.arFragment.mCustomDrawableView.demo = true;
                                     }
                                 });
                         mBoomButton.addBuilder(builder0);
@@ -279,7 +279,13 @@ public class BoomButtonDisplayMain {
                         TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_add)
-                                .normalText("Option 5");
+                                .normalText("Real Mode")
+                                .listener(new OnBMClickListener() {
+                                    @Override
+                                    public void onBoomButtonClick(int index) {
+                                        Global.arFragment.mCustomDrawableView.demo = false;
+                                    }
+                                });
                         mBoomButton.addBuilder(builder4);
                         break;
                 }

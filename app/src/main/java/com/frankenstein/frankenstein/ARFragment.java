@@ -83,6 +83,7 @@ public class ARFragment extends android.app.Fragment {
         int height;
         int width;
         LruCache mARCache;
+        Boolean demo = true;
 
         public CustomDrawableView(Context context) {
             super(context);
@@ -115,6 +116,17 @@ public class ARFragment extends android.app.Fragment {
                 cAzimuth = Global.angleDiff(azimuth,cAzimuth, 60);
                 cPitch = Global.angleDiff(pitch,cPitch, 20);
                 double[] pos = Global.mapFragment.getLatLng();
+                if(demo){
+                    Rect bound = box.getCurrentBound(cAzimuth, cPitch, 0f, 0f, 0f, 0f);
+                    Drawable c = box.getImage();
+                    if(c != null && bound != null){
+                        Log.d("gb3", "" + bound.toString() + c.toString());
+                        bounds = bound;
+                        c.setBounds(bound);
+                        c.draw(canvas);
+                    }
+                    return;
+                }
                 if(pos != null) {
                     int views = MainActivity.mNearbyMarkers.size();
                     double[] latlng = Global.mapFragment.getLatLng();
@@ -296,8 +308,6 @@ public class ARFragment extends android.app.Fragment {
                 Bitmap markerBM = markerLayout.getDrawingCache();
                 markerLayout.removeAllViews();
                 marker = new BitmapDrawable(getResources(), markerBM);
-                /*Rect bounds = new Rect(0,0,2000,2000);
-                marker.setBounds(bounds);*/
                 mCustomDrawableView.box.setImage(marker);
                 mCustomDrawableView.invalidate();
                 Log.d("MyApplication","Executed!");
