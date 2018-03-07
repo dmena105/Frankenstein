@@ -60,12 +60,11 @@
                 android:id="@+id/btnChangePhoto"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/startpages_button"
                 android:layout_gravity="center"
-                android:layout_margin="3dp"
-                android:textColor="#fff"
-                android:text="Photo">
-            </Button>
+                android:layout_marginLeft="50dp"
+                android:background="@drawable/startpages_button"
+                android:text="Photo"
+                android:textColor="#fff"></Button>
 
 
         </LinearLayout>

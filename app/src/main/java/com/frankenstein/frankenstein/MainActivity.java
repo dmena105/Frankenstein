@@ -91,11 +91,13 @@ public class MainActivity extends AppCompatActivity
     public static final float MIN_DISPLACEMENT_TO_UPDATE_MARKERS = 5;
     public FloatingActionButton fab;
     public static boolean istheToogleforFabOn;
+    public static Bitmap mProfilePicture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FrankensteinPermission.checkPermission(this);
         mApplicationContext = (Application)getApplicationContext();
         mMapButton = findViewById(R.id.boombutton_mainMap);
         mARButton = findViewById(R.id.boombutton_mainAR);
@@ -183,6 +185,7 @@ public class MainActivity extends AppCompatActivity
                             // Uri to Bitmap
                             InputStream image_stream = getContentResolver().openInputStream(Uri.parse(profileUri));
                             Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
+                            mProfilePicture = bitmap;
                             // Bitmap to Base64 String
                             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
@@ -223,6 +226,7 @@ public class MainActivity extends AppCompatActivity
                                         byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                         Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                         mImageViewProfilePic.setImageBitmap(decodedByte);
+                                        mProfilePicture = decodedByte;
                                     }
 
                                     else
@@ -272,6 +276,7 @@ public class MainActivity extends AppCompatActivity
                                     byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                                     Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
                                     mImageViewProfilePic.setImageBitmap(decodedByte);
+                                    mProfilePicture = decodedByte;
                                 }
 
                                 else
@@ -316,7 +321,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_gallery) {
-            startActivity(new Intent(this, GalleryTimeline.class));
+            Intent intent1 = new Intent(this, GalleryTimeline.class);
+            intent1.putExtra("origin", 0);
+            startActivity(intent1);
         } else if (id == R.id.nav_setting){
             startActivity(new Intent(this, SettingsActivity.class));
         }
@@ -471,6 +478,7 @@ public class MainActivity extends AppCompatActivity
                                 query.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
+                                        mNearbyMarkers = new ArrayList<>();
                                         if (dataSnapshot.hasChildren()){
                                             for (DataSnapshot dss: dataSnapshot.getChildren()){
                                                 String keyPic = dss.child("latitude").getValue(Long.class)

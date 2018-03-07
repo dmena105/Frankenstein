@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,12 +37,15 @@ public class SaveNewEntryActivity extends AppCompatActivity {
     private Button mSaveEntry;
     private FirebaseUser mFirebaseUser;
     private Float mAzimuth;
+    private int origin;
+    private final int FROM_MAP = 0;
     private final Context mContext = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_save_new_entry);
+        origin = getIntent().getIntExtra("origin", FROM_MAP);
         mImagePreview = findViewById(R.id.imageView_newEntry);
         mSummaryText = findViewById(R.id.EditText_summary_newEntry);
         mPostText = findViewById(R.id.editText_text_newEntry);
@@ -140,12 +144,12 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                 case 2:
                     HamButton.Builder builder2 = new HamButton.Builder()
                             .shadowEffect(true)
-                            .normalImageRes(R.drawable.ic_boom_button_current_location)
-                            .normalText("Option 3")
+                            .normalImageRes(R.drawable.ic_secret)
+                            .normalText("Click Here For A Fun Fact")
                             .listener(new OnBMClickListener() {
                                 @Override
                                 public void onBoomButtonClick(int index) {
-                                    Log.d("debug", "Option 3");
+                                    Toast.makeText(mContext, "Frankenstein is made up of *** classes!", Toast.LENGTH_SHORT).show();
                                 }
                             });
                     mBoomMenu.addBuilder(builder2);
