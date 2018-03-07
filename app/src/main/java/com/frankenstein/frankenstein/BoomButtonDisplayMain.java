@@ -248,7 +248,7 @@ public class BoomButtonDisplayMain {
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-                                        if (Global.mapFragment.mCurrentMarker == null) Toast.makeText(context
+                                        if (MapFragment.mCurrentMarker == null) Toast.makeText(context
                                                 , "Location cannot be determined, Please try again later"
                                                 , Toast.LENGTH_SHORT).show();
                                         else {

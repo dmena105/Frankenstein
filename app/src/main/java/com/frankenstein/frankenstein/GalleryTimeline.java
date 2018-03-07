@@ -35,12 +35,14 @@ public class GalleryTimeline extends AppCompatActivity {
     private CustomListAdapter adapter;
     private int entriesLoaded = 0;
     private boolean doneLoading = false;
+    private int origin;
     android.support.v7.widget.Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.card_view_time_line);
+        origin = getIntent().getIntExtra("origin", 1);
         //Find the List View that will hold the pictures
         mListView = (ListView) findViewById(R.id.GalleryTimeLineListView);
         list = new ArrayList<>();
@@ -160,7 +162,9 @@ public class GalleryTimeline extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         //Listen to for when the user presses the save Button
         if (item.getItemId() == R.id.action_back) {
-            finish();
+            if (origin == 0) finish();
+            else startActivity(new Intent(this, MainActivity.class));
+
         }
         return super.onOptionsItemSelected(item);
     }
