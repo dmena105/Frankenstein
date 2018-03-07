@@ -209,8 +209,8 @@ public class BoomButtonDisplayMain {
         try {
             mBoomButton.setInFragment(true);
             mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
-            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
-            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
+            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_3_3);
+            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_3_3);
             mBoomButton.setBoomEnum(BoomEnum.RANDOM);
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
@@ -228,19 +228,6 @@ public class BoomButtonDisplayMain {
                         mBoomButton.addBuilder(builder0);
                         break;
                     case 1:
-                        TextOutsideCircleButton.Builder builder1 = new TextOutsideCircleButton.Builder()
-                                .shadowEffect(true)
-                                .normalImageRes(R.drawable.ic_boom_button_random)
-                                .normalText("Option 2")
-                                .listener(new OnBMClickListener() {
-                                    @Override
-                                    public void onBoomButtonClick(int index) {
-
-                                    }
-                                });
-                        mBoomButton.addBuilder(builder1);
-                        break;
-                    case 2:
                         TextOutsideCircleButton.Builder builder2 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_add)
@@ -262,20 +249,7 @@ public class BoomButtonDisplayMain {
                                 });
                         mBoomButton.addBuilder(builder2);
                         break;
-                    case 3:
-                        TextOutsideCircleButton.Builder builder3 = new TextOutsideCircleButton.Builder()
-                                .shadowEffect(true)
-                                .normalImageRes(R.drawable.ic_boom_button_add_from_marker)
-                                .normalText("Option 4")
-                                .listener(new OnBMClickListener() {
-                                    @Override
-                                    public void onBoomButtonClick(int index) {
-
-                                    }
-                                });
-                        mBoomButton.addBuilder(builder3);
-                        break;
-                    case 4:
+                    case 2:
                         TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_add)
