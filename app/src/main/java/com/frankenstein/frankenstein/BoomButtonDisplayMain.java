@@ -14,7 +14,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.nightonke.boommenu.Animation.BoomEnum;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
-import com.nightonke.boommenu.BoomButtons.HamButton;
 import com.nightonke.boommenu.BoomButtons.OnBMClickListener;
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
@@ -78,14 +77,12 @@ public class BoomButtonDisplayMain {
     public void mapFragmentDisplay(){
         if (mBoomButton.getBuilders().size() != 0) mBoomButton.clearBuilders();
         try {
-            // boom menu button general setup
             mBoomButton.setInFragment(true);
             mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
             mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
             mBoomButton.setBoomEnum(BoomEnum.RANDOM);
             mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
             Log.d("debug", ""+ mBoomButton.getButtonEnum().toString());
-            // All builders
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
                     case 0:
@@ -210,29 +207,51 @@ public class BoomButtonDisplayMain {
     public void arFragmentDisplay(){
         if (mBoomButton.getBuilders().size() != 0) mBoomButton.clearBuilders();
         try {
-            // Boom menu button setup
             mBoomButton.setInFragment(true);
-            mBoomButton.setButtonEnum(ButtonEnum.Ham);
-            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.HAM_1);
-            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.HAM_1);
+            mBoomButton.setButtonEnum(ButtonEnum.TextOutsideCircle);
+            mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.DOT_5_3);
+            mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.SC_5_3);
             mBoomButton.setBoomEnum(BoomEnum.RANDOM);
-            // All builders
             for (int i = 0; i < mBoomButton.getPiecePlaceEnum().pieceNumber(); i++) {
                 switch (i) {
                     case 0:
-                        HamButton.Builder builder2 = new HamButton.Builder()
+                        TextOutsideCircleButton.Builder builder0 = new TextOutsideCircleButton.Builder()
+                                .shadowEffect(true)
+                                .normalImageRes(R.drawable.ic_boom_button_current_location)
+                                .normalText("Demo Mode")
+                                .listener(new OnBMClickListener() {
+                                    @Override
+                                    public void onBoomButtonClick(int index) {
+                                        Global.arFragment.mCustomDrawableView.demo = true;
+                                    }
+                                });
+                        mBoomButton.addBuilder(builder0);
+                        break;
+                    case 1:
+                        TextOutsideCircleButton.Builder builder1 = new TextOutsideCircleButton.Builder()
+                                .shadowEffect(true)
+                                .normalImageRes(R.drawable.ic_boom_button_random)
+                                .normalText("Option 2")
+                                .listener(new OnBMClickListener() {
+                                    @Override
+                                    public void onBoomButtonClick(int index) {
+
+                                    }
+                                });
+                        mBoomButton.addBuilder(builder1);
+                        break;
+                    case 2:
+                        TextOutsideCircleButton.Builder builder2 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_add)
                                 .normalText("New")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-                                        // If current location is null, show a toast
                                         if (MapFragment.mCurrentMarker == null) Toast.makeText(context
                                                 , "Location cannot be determined, Please try again later"
                                                 , Toast.LENGTH_SHORT).show();
                                         else {
-                                            // If current location is available, start editnewentryactivity
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", Global.mapFragment.mCurrentMarker.getPosition());
                                             newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
@@ -242,6 +261,32 @@ public class BoomButtonDisplayMain {
                                     }
                                 });
                         mBoomButton.addBuilder(builder2);
+                        break;
+                    case 3:
+                        TextOutsideCircleButton.Builder builder3 = new TextOutsideCircleButton.Builder()
+                                .shadowEffect(true)
+                                .normalImageRes(R.drawable.ic_boom_button_add_from_marker)
+                                .normalText("Option 4")
+                                .listener(new OnBMClickListener() {
+                                    @Override
+                                    public void onBoomButtonClick(int index) {
+
+                                    }
+                                });
+                        mBoomButton.addBuilder(builder3);
+                        break;
+                    case 4:
+                        TextOutsideCircleButton.Builder builder4 = new TextOutsideCircleButton.Builder()
+                                .shadowEffect(true)
+                                .normalImageRes(R.drawable.ic_boom_button_add)
+                                .normalText("Real Mode")
+                                .listener(new OnBMClickListener() {
+                                    @Override
+                                    public void onBoomButtonClick(int index) {
+                                        Global.arFragment.mCustomDrawableView.demo = false;
+                                    }
+                                });
+                        mBoomButton.addBuilder(builder4);
                         break;
                 }
             }
