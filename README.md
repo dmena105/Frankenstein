@@ -24,19 +24,18 @@ Download APK directly from https://dmena105.github.io/frankenstein.cs65.github.i
 
 ## Built With
 
-* [BOOM](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [CARDVIEW](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [BOOM](http://www.dropwizard.io/1.0.2/docs/) - The Buttons
+* [CARDVIEW](https://maven.apache.org/) - Library
 
 ## Authors
 
-* **David** - *Initial work* - [David](https://github.com/dmena105)
+* **David** - *GUI/MAP/Internals* - [David](https://github.com/dmena105)
 
-* **Timothy** - *Initial work* - [Name](https://github.com/____)
+* **Timothy** - *GUI/MAP/Internals* - [Name](https://github.com/____)
 
-* **Galen** - *Initial work* - [Name](https://github.com/____)
+* **Galen** - *AR/Internals* - [Name](https://github.com/____)
 
-* **Wintson** - *Initial work* - [Name](https://github.com/____)
+* **Wintson** - *AR/Internals* - [Name](https://github.com/____)
 
 ## Acknowledgments
 
