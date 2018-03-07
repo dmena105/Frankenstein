@@ -51,16 +51,20 @@ public class EditNewEntryActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_new_entry);
         Log.d("gb", "In editnew");
+        // Getting necessary data from the fragment that calls this activity
         location = getIntent().getParcelableExtra("location");
         azimuth = getIntent().getFloatExtra("azimuth", 0f);
         origin = getIntent().getIntExtra("origin", FROM_MAP);
+        // Assigning view variables
         mCameraView = findViewById(R.id.CameraView_newEntry);
         mBoomMenu = findViewById(R.id.boombutton_newEntry);
+        // Setup the boom menu
         mBoomMenu.setBoomEnum(BoomEnum.RANDOM);
         mBoomMenu.setPiecePlaceEnum(PiecePlaceEnum.HAM_3);
         mBoomMenu.setButtonPlaceEnum(ButtonPlaceEnum.HAM_3);
         mBoomMenu.setButtonEnum(ButtonEnum.Ham);
         Log.d("gb", "Edit's azimuth = "+azimuth);
+        // All builders
         for (int i=0; i<mBoomMenu.getPiecePlaceEnum().pieceNumber(); i++){
             switch(i){
                 case 0:
@@ -109,6 +113,7 @@ public class EditNewEntryActivity extends AppCompatActivity{
                     break;
             }
         }
+        // Setup the shutter button
         mButtonTakePic = findViewById(R.id.Button_takePic);
         mButtonTakePic.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,19 +122,22 @@ public class EditNewEntryActivity extends AppCompatActivity{
                 mCameraView.captureSnapshot();
             }
         });
+        // Setup essential camera function
         mCameraView.mapGesture(Gesture.PINCH, GestureAction.ZOOM);
         mCameraView.mapGesture(Gesture.TAP, GestureAction.FOCUS_WITH_MARKER);
+        // Listener that listens to actions of image capture
         mCameraView.addCameraListener(new CameraListener() {
             @Override
             public void onPictureTaken(byte[] jpeg) {
                 super.onPictureTaken(jpeg);
                 bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.length);
-
+                // Error guarding
                 if (bitmap == null) Toast.makeText(mContext
                         , "An error has occured, please try again later", Toast.LENGTH_SHORT).show();
                 else if (location == null) Toast.makeText(mContext
                         , "Unable to determine location, Please try again later", Toast.LENGTH_SHORT).show();
                 else {
+                    // If no errors occurred, start saveNewEntryActivity
                     Intent intent = new Intent(mContext, SaveNewEntryActivity.class);
                     intent.putExtra("origin", origin);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

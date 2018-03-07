@@ -58,7 +58,9 @@ public class SignUpActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
+        // Asking permission
         FrankensteinPermission.checkPermission(mActivity);
+        // Initializing variables
         File file = new File(Environment.getExternalStorageDirectory(), IMAGE_SRC);
         uriPic = FileProvider.getUriForFile(mContext, "com.frankenstein.frankenstein.fileprovider", file);
         File file2 = new File(Environment.getExternalStorageDirectory(), IMAGE_SRC2);
@@ -71,6 +73,7 @@ public class SignUpActivity extends AppCompatActivity {
         mProfilePicture = findViewById(R.id.imageButton_profilePicture);
         mNicknameText = findViewById(R.id.editText_signup_nickName);
 
+        // Take a picture when clicked on the image button
         mProfilePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,6 +104,7 @@ public class SignUpActivity extends AppCompatActivity {
                 ab.show();
             }
         });
+        // sign up if clicked
         mSignupButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -151,6 +155,7 @@ public class SignUpActivity extends AppCompatActivity {
         });
     }
 
+    // Call back for images and cropping
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         if (resultCode == RESULT_OK) {

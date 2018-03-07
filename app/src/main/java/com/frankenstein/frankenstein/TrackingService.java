@@ -60,10 +60,12 @@ public class TrackingService extends Service {
 
     public static boolean isRunning() {return isRunning;}
 
+    // Helper method for forming message
     public String formMessage(double lat, double lng, float azimuth){
         return lat + " " + lng + " " + azimuth;
     }
 
+    // Send meesage to Main Activity
     public void sendMessage(String info){
         Message msg = Message.obtain(null, UPDATE_LOCATION);
         Bundle bundle = new Bundle();
@@ -76,6 +78,7 @@ public class TrackingService extends Service {
         }
     }
 
+    // Thread for updating location. 
     class LocationTracker extends Thread{
         Handler handler = new Handler();
         Runnable tracker = new Runnable() {

@@ -66,11 +66,13 @@ public class DisplayEntryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_entry);
         origin = getIntent().getIntExtra("origin", FROM_MAIN);
+        // finish the activity if nothing is selected
         if (MapFragment.mCurrentSelection == null && origin == FROM_MAIN) {
             Toast.makeText(this, "An Error Occurred", Toast.LENGTH_SHORT).show();
             finish();
         }
         else {
+            // Assign variables
             entryToDisplay = MapFragment.mCurrentSelection;
             mTransitionGroup = findViewById(R.id.transitionContainer_delete);
             mConfirmDelete = findViewById(R.id.textView_confirm_delete);
@@ -88,17 +90,19 @@ public class DisplayEntryActivity extends AppCompatActivity {
             mImageViewContainer = findViewById(R.id.imageView_displayEntry_transitionContainer);
             mEnlargeHint = findViewById(R.id.TextView_displayEntry_enlargeHint);
 
+            // Setting up the animations for the picture
             imageLayout = mImageView.getLayoutParams();
             mImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
+                    // Setting up transition manager
                     TransitionManager.beginDelayedTransition(mImageViewContainer, new TransitionSet()
                             .addTransition(new ChangeBounds())
                             .addTransition(new ChangeImageTransform()));
                     if (expanded){
+                        // Shrink the imageview to 200dp, 272dp if it is expanded
                         ViewGroup.LayoutParams layout = mImageView.getLayoutParams();
-                        //dp * (dpi / 160)
+                        //px = dp * (dpi / 160)
                         layout.width = (int)convertDpToPixel(200, mContext);
                         layout.height = (int)convertDpToPixel(272, mContext);
                         mImageView.setLayoutParams(imageLayout);
@@ -106,6 +110,7 @@ public class DisplayEntryActivity extends AppCompatActivity {
                         Log.d("debug", "expanded is " + expanded);
                     }
                     else {
+                        // expand the image view to full screen
                         ViewGroup.LayoutParams params = mImageView.getLayoutParams();
                         params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                         params.height = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -116,11 +121,12 @@ public class DisplayEntryActivity extends AppCompatActivity {
                     expanded = !expanded;
                 }
             });
-
+            // Prepare for loading images
             mEnlargeHint.setVisibility(View.GONE);
             ((ScrollView)findViewById(R.id.scrollView2)).setVisibility(View.GONE);
             mDeleteButton.setVisibility(View.GONE);
             mSummaryText.setText("Loading. Please wait...");
+            // Loading images
             final DatabaseReference refUtil = MainActivity.databaseReference.child("users").child(MainActivity.username);
             refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -148,9 +154,11 @@ public class DisplayEntryActivity extends AppCompatActivity {
                     // byte array into bitmap
                     mImageView.setImageBitmap(BitmapFactory
                             .decodeByteArray(decodedString, 0, decodedString.length));
+                    // Format date and time
                     DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTimeInMillis(entryToDisplay.getPostTime());
+                    // Setup the views
                     mTimePostedText.setText(formatter.format(calendar.getTime()));
                     mSummaryText.setText(entryToDisplay.getSummary());
                     mDeleteButton.setVisibility(View.VISIBLE);
@@ -166,6 +174,7 @@ public class DisplayEntryActivity extends AppCompatActivity {
             mBoomButton.setBoomEnum(BoomEnum.RANDOM);
             mBoomButton.setPiecePlaceEnum(PiecePlaceEnum.HAM_3);
             mBoomButton.setButtonPlaceEnum(ButtonPlaceEnum.HAM_3);
+            // All builders
             for (int i=0; i<mBoomButton.getPiecePlaceEnum().pieceNumber(); i++){
                 switch (i){
                     case 0:
@@ -214,10 +223,11 @@ public class DisplayEntryActivity extends AppCompatActivity {
                         break;
                 }
             }
-            //Listen for Logout Button Clicked
+            //Listen for Logout Button Clicked, and setup the animation
             mDeleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // if the button is clicked once
                     if (textVisible){
                         DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                                 .child(MainActivity.username).child("items");
@@ -242,6 +252,7 @@ public class DisplayEntryActivity extends AppCompatActivity {
                         });
                     }
                     else {
+                        // if the button is clicked for the first time
                         com.transitionseverywhere.TransitionManager.beginDelayedTransition(mTransitionGroup);
                         textVisible = !textVisible;
                         mConfirmDelete.setVisibility(View.VISIBLE);
@@ -252,6 +263,7 @@ public class DisplayEntryActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if (textVisible){
+                        // cancel delete if pressed anywhere else on the screen
                         com.transitionseverywhere.TransitionManager.beginDelayedTransition(mTransitionGroup);
                         textVisible = !textVisible;
                         mConfirmDelete.setVisibility(View.GONE);
@@ -260,6 +272,8 @@ public class DisplayEntryActivity extends AppCompatActivity {
             });
         }
     }
+
+    // Helper method for converting DP to Pixels
     private float convertDpToPixel(float dp, Context context){
         Resources resources = context.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
