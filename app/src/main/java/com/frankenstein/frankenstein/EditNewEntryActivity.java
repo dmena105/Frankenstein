@@ -47,6 +47,7 @@ public class EditNewEntryActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_new_entry);
+        Log.d("gb", "In editnew");
         location = getIntent().getParcelableExtra("location");
         azimuth = getIntent().getFloatExtra("azimuth", 0f);
         mCameraView = findViewById(R.id.CameraView_newEntry);
@@ -55,6 +56,7 @@ public class EditNewEntryActivity extends AppCompatActivity{
         mBoomMenu.setPiecePlaceEnum(PiecePlaceEnum.HAM_3);
         mBoomMenu.setButtonPlaceEnum(ButtonPlaceEnum.HAM_3);
         mBoomMenu.setButtonEnum(ButtonEnum.Ham);
+        Log.d("gb", "Edit's azimuth = "+azimuth);
         for (int i=0; i<mBoomMenu.getPiecePlaceEnum().pieceNumber(); i++){
             switch(i){
                 case 0:

@@ -44,6 +44,7 @@ import com.google.android.gms.maps.model.internal.zzp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
@@ -85,7 +86,17 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     public static TreeMap<String, String> mPictureCache;
     public static boolean mapIsReady = false;
     private final Context mContext = getActivity();
-    public static float mAzimuth;
+    private float mAzimuth;
+
+    public void setmAzimuth(float azimuth){
+        mAzimuth = azimuth;
+        Log.d("gb", "Map's azimuth = "+azimuth);
+    }
+
+    public float getAzimuth(){
+        return mAzimuth;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -335,7 +346,8 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
                 DatabaseReference refUtil = MainActivity.databaseReference.child("users")
                         .child(MainActivity.username);
                 Log.d("debug", refUtil.toString());
-                refUtil.addListenerForSingleValueEvent(new ValueEventListener() {
+                Query query = refUtil.orderByChild("latitude");
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         String imageEncodedString = null;

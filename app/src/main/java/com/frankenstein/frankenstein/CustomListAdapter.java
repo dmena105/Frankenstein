@@ -6,8 +6,10 @@ import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.cache.disc.naming.HashCodeFileNameGenerator;
 import com.nostra13.universalimageloader.cache.memory.impl.WeakMemoryCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -23,6 +26,7 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
 import java.io.ByteArrayOutputStream;
@@ -41,39 +45,53 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
     private Context mContext;
     private int mResource;
     private int lastPosition = -1;
+    private LruCache mMemoryCache;
 
     //A view Holder for all "View" Items
     private static class ViewHolder{
         TextView caption;
         ImageView image;
-        ProgressBar progressBar;
     }
-
 
     public CustomListAdapter(Context context, int resource, ArrayList<Card> arrayList) {
         super(context, resource, arrayList);
         mContext = context;
         mResource = resource;
 
-        //sets up the image loader library
-        setupImageLoader();
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        String caption = getItem(position).getCaption();
-        String imgUrl = getItem(position).getImgURL();
-        String imgUri = getItem(position).getImgURL();
+    public void add(@Nullable Card object) {
+        super.add(object);
+        String imgUrl = object.getImgURL();
         Bitmap decodedByte;
 
         //Change bitmap string to Bitmap item
         if (imgUrl != null) {
             byte[] decodedString = Base64.decode(imgUrl, Base64.DEFAULT);
             decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-            //get a URI path from bitmap
-            imgUri = getImageUri(getContext(), decodedByte);
+            mMemoryCache.put(imgUrl, decodedByte);
         }
+    }
 
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        String caption = getItem(position).getCaption();
+        String imgUrl = getItem(position).getImgURL();
 
         try {
             //ViewHolder Object
@@ -85,7 +103,6 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
                 holder = new ViewHolder();
                 holder.caption = (TextView) convertView.findViewById(R.id.cardTitle);
                 holder.image = (ImageView) convertView.findViewById(R.id.cardImage);
-                holder.progressBar = (ProgressBar) convertView.findViewById(R.id.cardProgressBar);
 
                 convertView.setTag(holder);
             }
@@ -95,9 +112,7 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
 
             lastPosition = position;
             holder.caption.setText(caption);
-
-            //Create an Image Loader Object
-            ImageLoader imageLoader = ImageLoader.getInstance();
+            holder.image.setImageBitmap((Bitmap) mMemoryCache.get(imgUrl));
 
             int defaultImage = mContext.getResources().getIdentifier(
                     "@drawable/image_failed",null,mContext.getPackageName());
@@ -105,34 +120,12 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
             //Create Display Options
             DisplayImageOptions options = new DisplayImageOptions.Builder()
                     .cacheInMemory(true)
-                    .cacheOnDisc(true).resetViewBeforeLoading(true)
+                    .cacheOnDisc(true)
+                    .resetViewBeforeLoading(true)
                     .showImageForEmptyUri(defaultImage)
                     .showImageOnFail(defaultImage)
                     .showImageOnLoading(defaultImage).build();
 
-
-            //This sets the loader and is the responsible for the progress bar animations
-            imageLoader.displayImage(imgUri, holder.image, options, new ImageLoadingListener() {
-                @Override
-                public void onLoadingStarted(String imageUri, View view) {
-                    holder.progressBar.setVisibility(View.VISIBLE);
-                }
-
-                @Override
-                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                    holder.progressBar.setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                    holder.progressBar.setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onLoadingCancelled(String imageUri, View view) {
-
-                }
-            });
 
             return convertView;
 
@@ -144,7 +137,7 @@ public class CustomListAdapter extends ArrayAdapter<Card>{
 
     public String getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        inImage.compress(Bitmap.CompressFormat.JPEG, 0, bytes);
         return MediaStore.Images.Media.insertImage(inContext.getContentResolver(),
                 inImage, "Title", null);
     }

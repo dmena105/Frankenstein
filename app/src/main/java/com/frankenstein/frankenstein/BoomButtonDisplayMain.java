@@ -32,6 +32,7 @@ public class BoomButtonDisplayMain {
     private ArrayList<Marker> mAllMarkers;
     private Marker mCurrentMarkerSelected;
     private Marker mCustomLocationMarker;
+    private DisplayObject mDisplayObject;
     private float mAzimuth;
 
     public void setCurrentMarker(Marker mCurrentMarker) {
@@ -69,7 +70,6 @@ public class BoomButtonDisplayMain {
         mBoomButton = boomMenuButton;
         mMap = null;
         this.context = context;
-
     }
 
     public void mapFragmentDisplay(){
@@ -139,7 +139,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCurrentMarker.getPosition());
-                                            newEntry.putExtra("azimuth", mAzimuth);
+                                            newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -161,7 +161,7 @@ public class BoomButtonDisplayMain {
                                         else {
                                             Intent newEntry = new Intent(context, EditNewEntryActivity.class);
                                             newEntry.putExtra("location", mCustomLocationMarker.getPosition());
-                                            newEntry.putExtra("azimuth", 0);
+                                            newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
                                             context.startActivity(newEntry);
                                         }
                                     }
@@ -227,11 +227,19 @@ public class BoomButtonDisplayMain {
                         TextOutsideCircleButton.Builder builder2 = new TextOutsideCircleButton.Builder()
                                 .shadowEffect(true)
                                 .normalImageRes(R.drawable.ic_boom_button_add)
-                                .normalText("Option 3")
+                                .normalText("New")
                                 .listener(new OnBMClickListener() {
                                     @Override
                                     public void onBoomButtonClick(int index) {
-
+                                        if (Global.mapFragment.mCurrentMarker == null) Toast.makeText(context
+                                                , "Location cannot be determined, Please try again later"
+                                                , Toast.LENGTH_SHORT).show();
+                                        else {
+                                            Intent newEntry = new Intent(context, EditNewEntryActivity.class);
+                                            newEntry.putExtra("location", Global.mapFragment.mCurrentMarker.getPosition());
+                                            newEntry.putExtra("azimuth", Global.mapFragment.getAzimuth());
+                                            context.startActivity(newEntry);
+                                        }
                                     }
                                 });
                         mBoomButton.addBuilder(builder2);

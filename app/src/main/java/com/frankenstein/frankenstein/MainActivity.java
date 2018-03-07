@@ -13,6 +13,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.AsyncTask;
@@ -40,6 +41,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -48,11 +50,13 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.nightonke.boommenu.BoomMenuButton;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.microedition.khronos.opengles.GL;
@@ -79,7 +83,11 @@ public class MainActivity extends AppCompatActivity
     private Messenger mapFragmentMessenger;
     private Messenger trackingServiceMessenger;
     private Application mApplicationContext;
-
+    public static ArrayList<Marker> mNearbyMarkers;
+    private LatLng previousLocation;
+    private boolean firstTimeLoaded = false;
+    public static final float MAX_DISTANCE_FOR_AR_DISPLAY = 15;
+    public static final float MIN_DISPLACEMENT_TO_UPDATE_MARKERS = 5;
     public FloatingActionButton fab;
     public static boolean istheToogleforFabOn;
 
@@ -118,16 +126,20 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 if(mode == 0){
                     getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
+                    mARButton.setVisibility(View.GONE);
+                    mMapButton.setVisibility(View.VISIBLE);
                     mode = 1;
                 }else if(mode == 1){
                     getFragmentManager().beginTransaction().add(
                             com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
                     mode = 0;
+                    mARButton.setVisibility(View.VISIBLE);
+                    mMapButton.setVisibility(View.GONE);
                 }
 
             }
         });
-
+        mNearbyMarkers = new ArrayList<>();
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -354,36 +366,35 @@ public class MainActivity extends AppCompatActivity
     float[] mGeomagnetic;
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if(!istheToogleforFabOn) {
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-                mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
-            if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-                mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
-            if (mGravity != null && mGeomagnetic != null) {
-                float R[] = new float[9];
-                float I[] = new float[9];
-                boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-                if (success) {
-                    float orientation[] = new float[3];
-                    SensorManager.getOrientation(R, orientation);
-                    //Log.d("s1", ""+toDegrees(orientation[1]));
-                    if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0) {
-                        Log.d("s1", "Going to map");
-                        getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
-                        mode = 1;
-                        mARButton.setVisibility(View.GONE);
-                        mMapButton.setVisibility(View.VISIBLE);
-                    } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1) {
-                        Log.d("s1", "Going to ar");
-                        getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
-                        Global.arFragment.onSensorChanged(orientation);
-                        mode = 0;
-                        mARButton.setVisibility(View.VISIBLE);
-                        mMapButton.setVisibility(View.GONE);
-                    } else if (abs(toDegrees(orientation[1])) >= switchAngle) {
-                        Log.d("s1", "updating ar");
-                        Global.arFragment.onSensorChanged(orientation);
-                    }
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = Global.arFragment.lowPassFilter(event.values, mGravity);
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = Global.arFragment.lowPassFilter(event.values, mGeomagnetic);
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                Log.d("gb", "Testing");
+                Global.mapFragment.setmAzimuth((float)(toDegrees(orientation[0])+180));
+                if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0 && !istheToogleforFabOn) {
+                    Log.d("s1", "Going to map");
+                    getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
+                    mode = 1;
+                    mARButton.setVisibility(View.GONE);
+                    mMapButton.setVisibility(View.VISIBLE);
+                } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 1 && !istheToogleforFabOn) {
+                    Log.d("s1", "Going to ar");
+                    getFragmentManager().beginTransaction().add(com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
+                    Global.arFragment.onSensorChanged(orientation);
+                    mode = 0;
+                    mARButton.setVisibility(View.VISIBLE);
+                    mMapButton.setVisibility(View.GONE);
+                } else if (abs(toDegrees(orientation[1])) >= switchAngle && mode == 0) {
+                    Log.d("s1", "updating ar");
+                    Global.arFragment.onSensorChanged(orientation);
                 }
             }
         }
@@ -403,6 +414,18 @@ public class MainActivity extends AppCompatActivity
         } catch (RemoteException e){
             e.printStackTrace();
         }
+    }
+
+    private static boolean markerIsNearby(LatLng markerLoc, LatLng currLoc){
+        float[] result = new float[5];
+        Location.distanceBetween(currLoc.latitude, currLoc.longitude, markerLoc.latitude, markerLoc.longitude, result);
+        return result[0] < MAX_DISTANCE_FOR_AR_DISPLAY;
+    }
+
+    private static boolean timeToUpdateARMarkers(LatLng previousLoc, LatLng currLoc){
+        float[] result = new float[5];
+        Location.distanceBetween(currLoc.latitude, currLoc.longitude, previousLoc.latitude, currLoc.longitude, result);
+        return result[0] > MIN_DISPLACEMENT_TO_UPDATE_MARKERS;
     }
 
     @Override
@@ -426,13 +449,56 @@ public class MainActivity extends AppCompatActivity
                             MapFragment.mCurrentMarker.remove();
                         }
                         // else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currLoc, 17));
-                        MapFragment.mAzimuth = azimuth;
                         MapFragment.mCurrentMarker = MapFragment.mMap.addMarker(new MarkerOptions()
                                 .snippet("Current Location")
                                 .position(currLoc)
                                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
                         if (MapFragment.boomDisplay != null) MapFragment.boomDisplay.setCurrentMarker(MapFragment.mCurrentMarker);
                     }
+                    if (Global.arFragment.isVisible() && MapFragment.mAllMarkers != null
+                            && (!firstTimeLoaded || timeToUpdateARMarkers(previousLocation, currLoc))){
+                        Log.d("debug", "updating AR view");
+                        firstTimeLoaded = true;
+                        DatabaseReference refUtil = databaseReference.child("users").child(username)
+                                .child("items");
+                        for (final Marker marker: MapFragment.mAllMarkers){
+                            if (markerIsNearby(marker.getPosition(), currLoc)) {
+                                Log.d("debug", "There are markers nearby");
+                                Query query = refUtil.orderByChild("latitude");
+                                query.equalTo(marker.getPosition().latitude);
+                                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        if (dataSnapshot.hasChildren()){
+                                            for (DataSnapshot dss: dataSnapshot.getChildren()){
+                                                String keyPic = dss.child("latitude").getValue(Long.class)
+                                                        + "_" + dss.child("longitude").getValue(Long.class);
+                                                String encodedImage = null;
+                                                if (!MapFragment.mPictureCache.containsKey(keyPic)) {
+                                                    encodedImage = dss.child("picture").getValue(String.class);
+                                                    MapFragment.mPictureCache.put(keyPic, encodedImage);
+                                                }
+                                                else encodedImage = MapFragment.mPictureCache.get(keyPic);
+                                                if (encodedImage != null) {
+                                                    GalleryEntry entry = (GalleryEntry) marker.getTag();
+                                                    entry.setPicture(encodedImage);
+                                                    marker.setTag(entry);
+                                                    Log.d("debug", entry.getSummary());
+                                                }
+                                            }
+                                        }
+                                        if (!mNearbyMarkers.contains(marker)) mNearbyMarkers.add(marker);
+                                        Log.d("debug", "marker " + mNearbyMarkers.toString());
+
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {}
+                                });
+                            }
+                        }
+                    }
+                    previousLocation = currLoc;
             }
         }
     }
