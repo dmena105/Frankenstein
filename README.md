@@ -1,6 +1,6 @@
-# Frankestein
+# Frankenstein
 
-Re-imagineing of Android's built-in Gallery App. 
+Re-imagining of Android's built-in Gallery App. 
 
 ## Getting Started
 
@@ -26,7 +26,7 @@ Download APK directly from https://dmena105.github.io/frankenstein.cs65.github.i
 
 * **Galen** - *AR/Internals* - [Name](https://github.com/____)
 
-* **Wintson** - *AR/Internals* - [Name](https://github.com/____)
+* **Winston** - *AR/Internals* - [Name](https://github.com/____)
 
 ## Acknowledgments
 
