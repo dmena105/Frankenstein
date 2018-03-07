@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity
     private LatLng previousLocation;
     private boolean firstTimeLoaded = false;
     public static final float MAX_DISTANCE_FOR_AR_DISPLAY = 15;
-    public static final float MIN_DISPLACEMENT_TO_UPDATE_MARKERS = 3;
+    public static final float MIN_DISPLACEMENT_TO_UPDATE_MARKERS = 5;
     public FloatingActionButton fab;
     public static boolean istheToogleforFabOn;
 
@@ -126,11 +126,15 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 if(mode == 0){
                     getFragmentManager().beginTransaction().remove(Global.arFragment).commit();
+                    mARButton.setVisibility(View.GONE);
+                    mMapButton.setVisibility(View.VISIBLE);
                     mode = 1;
                 }else if(mode == 1){
                     getFragmentManager().beginTransaction().add(
                             com.frankenstein.frankenstein.R.id.main_frame, Global.arFragment).commit();
                     mode = 0;
+                    mARButton.setVisibility(View.VISIBLE);
+                    mMapButton.setVisibility(View.GONE);
                 }
 
             }
@@ -451,7 +455,6 @@ public class MainActivity extends AppCompatActivity
                                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_current_location)));
                         if (MapFragment.boomDisplay != null) MapFragment.boomDisplay.setCurrentMarker(MapFragment.mCurrentMarker);
                     }
-                    Log.d("debug", "before the update");
                     if (Global.arFragment.isVisible() && MapFragment.mAllMarkers != null
                             && (!firstTimeLoaded || timeToUpdateARMarkers(previousLocation, currLoc))){
                         Log.d("debug", "updating AR view");
@@ -460,6 +463,7 @@ public class MainActivity extends AppCompatActivity
                                 .child("items");
                         for (final Marker marker: MapFragment.mAllMarkers){
                             if (markerIsNearby(marker.getPosition(), currLoc)) {
+                                Log.d("debug", "There are markers nearby");
                                 Query query = refUtil.orderByChild("latitude");
                                 query.equalTo(marker.getPosition().latitude);
                                 query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -467,14 +471,25 @@ public class MainActivity extends AppCompatActivity
                                     public void onDataChange(DataSnapshot dataSnapshot) {
                                         if (dataSnapshot.hasChildren()){
                                             for (DataSnapshot dss: dataSnapshot.getChildren()){
-                                                String encodedImage = dss.child("picture").getValue(String.class);
-                                                GalleryEntry entry = (GalleryEntry) marker.getTag();
-                                                entry.setPicture(encodedImage);
-                                                marker.setTag(entry);
+                                                String keyPic = dss.child("latitude").getValue(Long.class)
+                                                        + "_" + dss.child("longitude").getValue(Long.class);
+                                                String encodedImage = null;
+                                                if (!MapFragment.mPictureCache.containsKey(keyPic)) {
+                                                    encodedImage = dss.child("picture").getValue(String.class);
+                                                    MapFragment.mPictureCache.put(keyPic, encodedImage);
+                                                }
+                                                else encodedImage = MapFragment.mPictureCache.get(keyPic);
+                                                if (encodedImage != null) {
+                                                    GalleryEntry entry = (GalleryEntry) marker.getTag();
+                                                    entry.setPicture(encodedImage);
+                                                    marker.setTag(entry);
+                                                    Log.d("debug", entry.getSummary());
+                                                }
                                             }
                                         }
-                                        mNearbyMarkers.add(marker);
-                                        Log.d("debug", "size " + mNearbyMarkers.toString());
+                                        if (!mNearbyMarkers.contains(marker)) mNearbyMarkers.add(marker);
+                                        Log.d("debug", "marker " + mNearbyMarkers.toString());
+
                                     }
 
                                     @Override
