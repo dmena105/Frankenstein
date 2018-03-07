@@ -1,11 +1,14 @@
 package com.frankenstein.frankenstein;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -21,12 +24,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 
 public class GalleryTimeline extends AppCompatActivity {
-    private ArrayList<Marker> mAllEntries;
     private static final String TAG = "GalleryTimeline";
     private int previousLast;
     private ArrayList<Card> list;
+    private ArrayList<String> keyList;
+    private ArrayList<String> encodedImageList;
     private ListView mListView;
     private CustomListAdapter adapter;
     private int entriesLoaded = 0;
@@ -37,10 +42,11 @@ public class GalleryTimeline extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.card_view_time_line);
-        mAllEntries = MapFragment.mAllMarkers;
         //Find the List View that will hold the pictures
         mListView = (ListView) findViewById(R.id.GalleryTimeLineListView);
         list = new ArrayList<>();
+        keyList = new ArrayList<>();
+        encodedImageList = new ArrayList<>();
         //Set up the Toolbar
         toolbar = (android.support.v7.widget.Toolbar)findViewById(R.id.toolbarForGalleryTimeline);
         setSupportActionBar(toolbar);
@@ -78,12 +84,15 @@ public class GalleryTimeline extends AppCompatActivity {
                                                     double lat = dss.child("latitude").getValue(Double.class);
                                                     double lng = dss.child("longitude").getValue(Double.class);
                                                     String picKey = lat + "-" + lng;
+                                                    keyList.add(picKey);
                                                     String encodedImage;
                                                     if (MapFragment.mPictureCache.containsKey(picKey)){
                                                         encodedImage = MapFragment.mPictureCache.get(picKey);
+                                                        encodedImageList.add(encodedImage);
                                                     }
                                                     else {
                                                         encodedImage = dss.child("picture").getValue(String.class);
+                                                        encodedImageList.add(encodedImage);
                                                     }
                                                     DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
                                                     Calendar calendar = Calendar.getInstance();
@@ -110,6 +119,36 @@ public class GalleryTimeline extends AppCompatActivity {
                 }
             }
         });
+
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String selectedKey = keyList.get(position);
+                ArrayList<Marker> list = MapFragment.mAllMarkers;
+
+                for (int i = 0; i < list.size(); i++){
+                    Double lat = list.get(i).getPosition().latitude;
+                    Double lng = list.get(i).getPosition().longitude;
+                    String madeKey = lat + "-" + lng;
+                    //Check that the key matches with the location
+                    if (selectedKey.equals(madeKey)){
+                        MapFragment.mCurrentSelection = (GalleryEntry) list.get(i).getTag();
+                        MapFragment.mCurrentSelection.setPicture(encodedImageList.get(position));
+                        //Now that the picture has been set, start the new Display Entry Activity
+                        try{
+                            Intent intent = new Intent(getApplicationContext(), DisplayEntryActivity.class);
+                            startActivity(intent);
+
+                        } catch (NullPointerException e){
+                            Toast.makeText(getApplicationContext(), "An Error Occured. Please Try Again Later"
+                                    , Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+
+            }
+        });
+
     }
 
     @Override

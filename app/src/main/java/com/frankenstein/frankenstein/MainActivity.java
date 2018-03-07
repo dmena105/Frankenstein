@@ -339,13 +339,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume(){
         super.onResume();
+        //Check if the settings for the Fab button have changed
         if(istheToogleforFabOn){
             fab.setVisibility(View.VISIBLE);
-            Log.d(TAG, "visible");
         }
         else {
             fab.setVisibility(View.INVISIBLE);
-            Log.d(TAG, "not visible");
         }
         Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
         Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);

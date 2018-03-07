@@ -45,7 +45,6 @@ public class DisplayEntryActivity extends AppCompatActivity {
     private boolean textVisible;
     private Button mDeleteButton;
     private View mCancelDelete;
-    private LatLng location;
     private BoomMenuButton mBoomButton;
     private GalleryEntry entryToDisplay;
     private ImageView mImageView;

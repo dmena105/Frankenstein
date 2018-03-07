@@ -80,7 +80,7 @@ public class MapFragment extends android.app.Fragment implements OnMapReadyCallb
     private BoomMenuButton mBoomButton;
     private Marker mCurrentMarkerSelected;
     private Marker mCustomLocationMarker;
-    private ClusterManager<ClusteredMarker> mClusterManager;
+    public static ClusterManager<ClusteredMarker> mClusterManager;
     public static ArrayList<Marker> mAllMarkers;
     public static BoomButtonDisplayMain boomDisplay;
     public static TreeMap<String, String> mPictureCache;

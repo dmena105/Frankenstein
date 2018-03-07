@@ -4,6 +4,7 @@ import java.sql.Blob;
 
 /**
  * Created by Timothyqiu on 2018-02-24.
+ *
  */
 
 public class GalleryEntry {
