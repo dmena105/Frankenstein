@@ -10,10 +10,6 @@ These instructions will get you a copy of the project up and running on your and
 
 Android Phone with an APK of 26 or higher
 
-```
-Give examples
-```
-
 ### Installing
 
 Open the file on Android Studio, clean the project and run directly into compatible android device 
@@ -21,11 +17,6 @@ Open the file on Android Studio, clean the project and run directly into compati
 or
 
 Download APK directly from https://dmena105.github.io/frankenstein.cs65.github.io/ 
-
-## Built With
-
-* [BOOM](http://www.dropwizard.io/1.0.2/docs/) - The Buttons
-* [CARDVIEW](https://maven.apache.org/) - Library
 
 ## Authors
 
@@ -41,5 +32,5 @@ Download APK directly from https://dmena105.github.io/frankenstein.cs65.github.i
 
 * Dartmouth Computer Science Department
 * Professor XD
-* Soyeon for being our tester and giving us thin mints that one time
+* Soyeon for being our tester and giving us thin mints that one time and coming to our presentation
 
