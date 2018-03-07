@@ -3,7 +3,7 @@ package com.frankenstein.frankenstein;
 /**
  * Created by davidmena on 2/24/18.
  *
- * This is a Object Card that holds the Location of the image and the Caption
+ * This is a Object Card that holds a refrence to an Image and it holds the Caption of the Image
  */
 
 public class Card {

@@ -44,6 +44,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Created by davidmena on 2/24/18.
+ *
+ * The user profile allows the user to change their profile photo, and nickname from their account
+ */
+
 public class UserProfileActivity extends AppCompatActivity {
     private static final String TAG = "USERRPOFILE";
 
@@ -116,6 +122,7 @@ public class UserProfileActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                             case 0:
+                                //This calls the on taking a photo with camera
                                 Intent takePic = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                                 if (takePic.resolveActivity(getPackageManager()) != null) {
                                     takePic.putExtra(MediaStore.EXTRA_OUTPUT, uriPic);
@@ -123,6 +130,7 @@ public class UserProfileActivity extends AppCompatActivity {
                                 }
                                 break;
                             case 1:
+                                //this calls on getting a photo from the Gallery
                                 Intent getPic = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                                 if (getPic.resolveActivity(getPackageManager()) != null) {
                                     getPic.putExtra(MediaStore.EXTRA_OUTPUT, uriGallery);
@@ -136,6 +144,7 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
 
+        //This sets the email Text view with the email the user provided on their account
         email.setText(mFirebaseUser.getEmail());
 
         //This is to load the UserName and Image from FireBase
@@ -197,7 +206,6 @@ public class UserProfileActivity extends AppCompatActivity {
                 }
             }
         });
-
         mCancelLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -225,6 +233,7 @@ public class UserProfileActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         Log.d("debug", resultCode + "");
+        //Handles what to do on returns from either the camera or gallery select or crop photo
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case CAPTURE_IMAGE:
