@@ -69,6 +69,8 @@ public class SaveNewEntryActivity extends AppCompatActivity {
                         else if (summaryText.equals("")){
                             if (mPostText.getText().toString().length() > 30)
                                 summaryText =(mPostText.getText().toString().substring(0, 26) + "...");
+                            else if(mPostText.getText().toString().length() <= 0)
+                                summaryText = "No summary available";
                             else
                                 summaryText = mPostText.getText().toString();
                         }

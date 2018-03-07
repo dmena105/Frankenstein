@@ -19,6 +19,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -77,12 +78,11 @@ public class ARFragment extends android.app.Fragment {
     public class CustomDrawableView extends View {
         Rect bounds;
         Paint paint = new Paint();
-        Boolean rotating = false;
         //Testing..
-        DisplayObject North;
-        DisplayObject NorthF;
+        DisplayObject box;
         int height;
         int width;
+        LruCache mARCache;
 
         public CustomDrawableView(Context context) {
             super(context);
@@ -90,46 +90,51 @@ public class ARFragment extends android.app.Fragment {
             getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             height = displayMetrics.heightPixels;
             width = displayMetrics.widthPixels;
-            this.North = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
-                    (int)(width*.9), (int)(height*.9), 0f,0f,width,height);
-            this.NorthF = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
-                    (int)(width*.9), (int)(height*.9), 0.0005f,0f,width,height);
+            this.box = new DisplayObject(centerN, (int)(width/2), (int)(height/2),
+                    (int)(width*.8), (int)(height*.8), width,height);
             paint.setColor(0xff00ff00);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(5);
             paint.setTextSize(100);
             paint.setAntiAlias(true);
+            final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+            // Use 1/8th of the available memory for this memory cache.
+            final int cacheSize = maxMemory / 8;
+
+            mARCache = new LruCache<String, BitmapDrawable>(cacheSize) {
+                @Override
+                protected int sizeOf(String key, BitmapDrawable bitmap) {
+                    return bitmap.getBitmap().getByteCount() / 1024;
+                }
+            };
         };
 
         protected void onDraw(Canvas canvas) {
             if (azimuth != null) {
                 cAzimuth = Global.angleDiff(azimuth,cAzimuth, 60);
                 cPitch = Global.angleDiff(pitch,cPitch, 20);
-                if(abs(roll-cRoll)>5){
-                    rotating = true;
-                }
-                if(rotating){
-                    if(abs(Global.angleDist(roll,90f)) < 5)
-                        cRoll = Global.angleDiff(90f, cRoll, 5);
-                    cRoll = Global.angleDiff(roll, cRoll, 5);
-                    if(abs(roll-cRoll) < 1)
-                        rotating = false;
-                }
-                //Acting weird. Suspended, will ask about removal/readding
-                //canvas.rotate(-(cRoll-90), width/2, height/2);
-                Rect n = North.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
-                Drawable c = North.getImage();
-                if(n!=null && c!=null) {
-                    Log.d("gb3", ""+n.toString()+c.toString());
-                    bounds = n;
-                    c.setBounds(n);
-                    c.draw(canvas);
-                }
-                n = NorthF.getCurrentBound(cAzimuth, cPitch, 0f, 0f);
-                if(n!=null)
-                    canvas.drawRect(n, paint);
-                if(abs(azimuth-cAzimuth)> 2 || abs(pitch-cPitch) > 2){
-                    mCustomDrawableView.invalidate();
+                double[] pos = Global.mapFragment.getLatLng();
+                if(pos != null) {
+                    int views = MainActivity.mNearbyMarkers.size();
+                    double[] latlng = Global.mapFragment.getLatLng();
+                    Log.d("gb", "Views = "+views);
+                    for(int i = 0; i<views; i++){
+                        Marker cur = MainActivity.mNearbyMarkers.get(i);
+                        LatLng objlatlng = cur.getPosition();
+                        Rect bound = box.getCurrentBound(cAzimuth, cPitch, (float)latlng[0],
+                                (float)latlng[1], objlatlng.latitude, objlatlng.longitude);
+                        String key = ((GalleryEntry)cur.getTag()).getPicture();
+                        Drawable c = (BitmapDrawable)mARCache.get(key);
+                        if (bound != null && c != null) {
+                            Log.d("gb3", "" + bound.toString() + c.toString());
+                            bounds = bound;
+                            c.setBounds(bound);
+                            c.draw(canvas);
+                        }
+                    }
+                } else {
+                    canvas.drawText("Syncing with gps. Please wait", 0.05f*width, .5f*height, paint);
                 }
             }
         }
@@ -185,7 +190,7 @@ public class ARFragment extends android.app.Fragment {
             createMarkerThread c = new createMarkerThread(profile, photo, summary);
             c.run();
         } else {
-            mCustomDrawableView.North.setImage(marker);
+            mCustomDrawableView.box.setImage(marker);
         }
         mBoomButton = getActivity().findViewById(R.id.boombutton_mainAR);
         BoomButtonDisplayMain displayMain = new BoomButtonDisplayMain(mBoomButton, getActivity());
@@ -293,7 +298,7 @@ public class ARFragment extends android.app.Fragment {
                 marker = new BitmapDrawable(getResources(), markerBM);
                 /*Rect bounds = new Rect(0,0,2000,2000);
                 marker.setBounds(bounds);*/
-                mCustomDrawableView.North.setImage(marker);
+                mCustomDrawableView.box.setImage(marker);
                 mCustomDrawableView.invalidate();
                 Log.d("MyApplication","Executed!");
             }

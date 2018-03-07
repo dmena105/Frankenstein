@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -347,8 +348,8 @@ public class MainActivity extends AppCompatActivity
             fab.setVisibility(View.INVISIBLE);
             Log.d(TAG, "not visible");
         }
-        Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
-        Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM);
+        Global.mSensorManager.registerListener(this, Global.accelerometer, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
+        Global.mSensorManager.registerListener(this, Global.magnetometer, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
     }
 
     @Override
@@ -377,7 +378,8 @@ public class MainActivity extends AppCompatActivity
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                Log.d("gb", "Testing");
+                int test = ((int)toDegrees(orientation[0]));
+                Log.d("gb", "Testing "+test);
                 Global.mapFragment.setmAzimuth((float)(toDegrees(orientation[0])+180));
                 if (abs(toDegrees(orientation[1])) < switchAngle && mode == 0 && !istheToogleforFabOn) {
                     Log.d("s1", "Going to map");
@@ -483,13 +485,18 @@ public class MainActivity extends AppCompatActivity
                                                     GalleryEntry entry = (GalleryEntry) marker.getTag();
                                                     entry.setPicture(encodedImage);
                                                     marker.setTag(entry);
-                                                    Log.d("debug", entry.getSummary());
                                                 }
                                             }
                                         }
-                                        if (!mNearbyMarkers.contains(marker)) mNearbyMarkers.add(marker);
-                                        Log.d("debug", "marker " + mNearbyMarkers.toString());
-
+                                        if (!mNearbyMarkers.contains(marker)) {
+                                            mNearbyMarkers.add(marker);
+                                            String key = ((GalleryEntry)marker.getTag()).getPicture();
+                                            byte[] decodedString = Base64.decode(key, Base64.DEFAULT);
+                                            Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                            BitmapDrawable val = new BitmapDrawable(getResources(), bitmap);
+                                            Global.arFragment.mCustomDrawableView.mARCache.put(key, val);
+                                            Log.d("debug", "marker " + mNearbyMarkers.toString());
+                                        }
                                     }
 
                                     @Override

@@ -28,29 +28,23 @@ public class DisplayObject {
     int spanY;
     int width;
     int height;
-    //The lat/lng of the object
-    Float lat;
-    Float lng;
 
     public DisplayObject(){
     }
 
-    public DisplayObject(Float[] center, int centerX, int centerY, int spanX, int spanY, float lat,
-                         float lng, int width, int height){
+    public DisplayObject(Float[] center, int centerX, int centerY, int spanX, int spanY, int width, int height){
         this.centerAngles = center.clone();
         this.centerX = centerX;
         this.centerY = centerY;
         this.spanX = spanX;
         this.spanY = spanY;
-        this.lat=lat;
-        this.lng=lng;
         this.width=width;
         this.height=height;
     }
 
-    public Rect getCurrentBound(Float azimuth, Float pitch, Float lat, Float lng){
+    public Rect getCurrentBound(Float azimuth, double pitch, double poslat, double poslng, double objlat, double objlng){
         float[] mdistance = new float[3];
-        Location.distanceBetween(lat, lng, this.lat, this.lng, mdistance);
+        Location.distanceBetween(poslat, poslng, objlat, objlng, mdistance);
         float distance = abs(mdistance[0]);
         Log.d("gb3", "distance = "+distance);
         if(distance > 100 || distance < 0){
@@ -65,11 +59,11 @@ public class DisplayObject {
             fract = Global.angleDist(azimuth, this.centerAngles[0]) / (float) log(1 + scale);
         } else {
             Location start = new Location("");
-            start.setLatitude(this.lat);
-            start.setLongitude(this.lng);
+            start.setLatitude(objlat);
+            start.setLongitude(objlng);
             Location goal = new Location("");
-            goal.setLatitude(lat);
-            goal.setLongitude(lng);
+            goal.setLatitude(poslat);
+            goal.setLongitude(poslng);
             fract = Global.angleDist(azimuth, (float)toDegrees(start.bearingTo(goal))%360)/(float)log(1+scale);
         }
         if(abs(fract) > 90){
@@ -77,7 +71,7 @@ public class DisplayObject {
         }
         int centerX = (int)(this.centerX+sin(Math.toRadians(fract))*width);
         Log.d("gb3", "sin = "+sin(Math.toRadians(fract))+" Angle "+fract);
-        float offVertical = Global.angleDist(pitch, this.centerAngles[1]);
+        float offVertical = Global.angleDist((float)pitch, this.centerAngles[1]);
         int centerY;
         //Check if your within 90 degrees of the
         if(abs(offVertical) < 90){
